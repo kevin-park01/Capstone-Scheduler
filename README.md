@@ -1,1 +1,3 @@
 # Capstone-Scheduler
+
+Junghwan Park
