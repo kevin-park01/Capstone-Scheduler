@@ -1,0 +1,5 @@
+# Visual Studio settings
+.vscode
+
+# Generated files
+*.exe
