@@ -1,6 +1,9 @@
 #include <iostream>
 #include <list>
 using namespace std;
+   
+const int ROOM_START = 6;
+const int INTERVAL = 15;
 
 struct sessionNode {
     int sessionId, duration, estimatedCapacity;
@@ -110,4 +113,5 @@ int main() {
         }
         cout << endl;
     }
+    return 0;
 }
