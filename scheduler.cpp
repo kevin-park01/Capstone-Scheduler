@@ -1,52 +1,111 @@
 #include <iostream>
+#include <stdexcept>
 #include "session.h"
 
 const int ROOM_START = 6;  // 6 a.m. 24-hour clock 
-const int INTERVAL = 15;    // minutes
+const double INTERVAL = 15.0;    // minutes
 
-bool checkCompatability(session* session, room* room)
+bool assignSession(Session* session, Room* room, int timeSlots, list<Room*> roomList) 
 {
-	bool equipCompatible = true, capCompatible = true, timeCompatible = true;
+	bool timeCompatible = false, speakerCompatible = true;
+	int currSessionIndex = (int)ceil(60 * (room->startTime - ROOM_START) / INTERVAL);		// Initialize current index to index where room opens
+	int leftIndex;
+
+	session->speaker.sort();
+	while (!timeCompatible && currSessionIndex < room->schedule.size())		// Loop through room schedule
+	{
+		leftIndex = currSessionIndex;
+		speakerCompatible = true;
+		while (!timeCompatible && speakerCompatible && currSessionIndex < room->schedule.size() && room->schedule.at(currSessionIndex) == nullptr)		// Find the earliest interval that fits the session
+		{
+			currSessionIndex++;
+			// Check if the interval is long enough to fit the session
+			if (currSessionIndex - leftIndex == timeSlots) 		
+			{
+				// Check other rooms for overlapping speakers
+				for (Room* scheduledRoom : roomList) 		
+				{
+					if (!speakerCompatible)
+					{
+						break;
+					}
+
+					// Loop through the time slots in each room
+					for (int j = leftIndex; j < leftIndex + timeSlots; j++)
+					{
+						// A time slot is available if it is a null pointer
+						if (!scheduledRoom->schedule.at(j))		
+						{
+							continue;
+						}
+
+						// Compare speakers at the same index in two different rooms
+						scheduledRoom->schedule.at(j)->speaker.sort();
+						if (session->speaker == scheduledRoom->schedule.at(j)->speaker) 		
+						{
+							speakerCompatible = false;
+							currSessionIndex = leftIndex;
+							break;
+						}
+					}
+				}
+				
+				if (speakerCompatible)
+				{
+					timeCompatible = true;
+				}
+			}
+		}
+		currSessionIndex++;
+	}
+
+	// If the schedule has an opening for the session to be scheduled and speakers are not overlapped, then assign the session to appropriate time slots
+	if (timeCompatible)
+	{
+		for (int i = leftIndex; i < leftIndex + timeSlots; i++)
+		{
+			room->schedule.at(i) = session;
+		}
+	}
+
+	return timeCompatible;
+}
+
+bool checkCompatibility(Session* session, Room* room)
+{
+	bool equipCompatible = true, capCompatible = true;
 
 	// Check equipment compatability
-	session->equipment->sort();
-	room->equipment->sort();
-	if (*session->equipment != *room->equipment)
+	session->equipment.sort();
+	room->equipment.sort();
+	if (session->equipment != room->equipment) 
 	{
 		equipCompatible = false;
 	}
-
+	
 	// Check estimated capacity of session doesn't exceed max capacity of room
 	if (session->estimatedCapacity > room->maxCapacity)
 	{
 		capCompatible = false;
 	}
 
-	// Check if room is available for duration of session
-	if ((room->endTime * 60) <= (ROOM_START * 60) + session->duration + room->schedule->size() * INTERVAL)
-	{
-		timeCompatible = false;
-	}
-
-	return equipCompatible && capCompatible && timeCompatible;
+	return equipCompatible && capCompatible;
 }
 
-
-list<room*> schedule(list<session*> sessionList, list<room*> emptyRoomList)     // Schedule sessions into rooms
+list<Room*> schedule(list<Session*> sessionList, list<Room*> emptyRoomList)     // Schedule sessions into rooms
 {
-	list<room*> roomList = list<room*>();      // List containing rooms that have sessions scheduled	
+	list<Room*> roomList = list<Room*>();      // List containing rooms that have sessions scheduled	
 	bool isScheduled = false;
 	int timeSlots = 0;
 
-	for (session* session : sessionList)
+	for (Session* session : sessionList)
 	{
 		timeSlots = (int)ceil(session->duration / INTERVAL);  // number of time slots to fill for this session
-		for (room* room : roomList)
+		for (Room* room : roomList)
 		{
-			if (checkCompatability(session, room)) // Check compatability of sessions to rooms
+			if (checkCompatibility(session, room)) // Check compatability of sessions to rooms
 			{
-				room->schedule->insert(room->schedule->cend(), timeSlots, session);	// fill up the time slots
-				isScheduled = true;
+				isScheduled = assignSession(session, room, timeSlots, roomList);	// fill up the time slots
 			}
 		}
 
@@ -54,54 +113,65 @@ list<room*> schedule(list<session*> sessionList, list<room*> emptyRoomList)     
 		{									// and equip it accordingly with the session to schedule		
 			if (emptyRoomList.empty())
 			{
-				throw new exception("Attempted to get a room from emptyRoomList while it was empty");
+				//throw new exception("Attempted to get a room from emptyRoomList while it was empty");
+				cout << "Attempted to get a room from emptyRoomList while it was empty" << endl;
+				break;
 			}
 
-			room* newRoom = (emptyRoomList).back();
+			Room* newRoom = (emptyRoomList).back();
 			emptyRoomList.pop_back();
 			newRoom->equipment = session->equipment;
-			newRoom->schedule->insert(newRoom->schedule->cend(), timeSlots, session);	// fill up the time slots
+			assignSession(session, newRoom, timeSlots, roomList);	// fill up the time slots
 			roomList.push_back(newRoom);
 		}
 	}
 	return roomList;
 }
 
-
-void printSessions(list<session*> sessionList)   // Print each session and equipment needed
+void printSessions(list<Session*> sessionList)   // Print each session and equipment needed
 {
-	for (session* session : sessionList)
+	for (Session* session : sessionList)
 	{
-		cout << session->sessionId << ": ";
-		for (string equipment : *session->equipment)
+		cout << "Session " << session->sessionId << " with speaker(s) { ";
+		for (int speaker : session->speaker) {
+			cout << speaker << " ";
+		}
+		cout << "} needs equipment { ";
+		for (string equipment : session->equipment)
 		{
 			cout << equipment << " ";
 		}
-		cout << endl;
+		cout << "} for " << session->duration << " minutes (" << (int)ceil(session->duration / INTERVAL) << " time slots)." << endl;
 	}
 	cout << endl;
 }
 
-
-void printSchedule(list<room*> scheduledRooms)  // Print each room that has been scheduled and its equipment
+void printSchedule(list<Room*> scheduledRooms)  // Print each room that has been scheduled and its equipment
 {
-	for (room* room : scheduledRooms)
+	for (Room* room : scheduledRooms)
 	{
-		cout << "Schedule for room " << room->roomId << " ( ";
-		for (string equipment : *room->equipment)
+		cout << "Room " << room->roomId << " opens at " << room->startTime << " ( ";
+		for (string equipment : room->equipment)
 		{
 			cout << equipment << " ";
 		}
-		cout << "): ";
-		for (session* session : *room->schedule)
+		cout << "): " << endl;
+
+		int counter = 0;
+		for (Session* session : room->schedule)
 		{
+			if(counter % 4 == 0) {
+				cout << "|  ";
+			}
+			counter += 1;
+
 			if (session != nullptr)
 			{
 				cout << session->sessionId << "  ";
 			}
 			else
 			{
-				cout << " _  ";
+				cout << "_  ";
 			}
 		}
 		cout << endl;
@@ -110,24 +180,27 @@ void printSchedule(list<room*> scheduledRooms)  // Print each room that has been
 
 int main()
 {
-	list<room*> emptyRoomList;         // List that initially contains every room available to be scheduled
-	list<session*> sessionList;     // List that contains sessions to be scheduled
+	list<Room*> emptyRoomList;         // List that initially contains every room available to be scheduled
+	list<Session*> sessionList;     // List that contains sessions to be scheduled
 
 	// Empty rooms
-	room* room1 = new room(1, 50, ROOM_START, 18, new list<string>);
-	room* room2 = new room(2, 100, 8, 18, new list<string>);
+	Room* room1 = new Room(1, 50, 7, 14, list<string>());
+	Room* room2 = new Room(2, 100, 8, 14, list<string>());
 
-	emptyRoomList = { room1, room2 };
+	emptyRoomList = { room2, room1 };
 
 	// Sessions to schedule
-	session* session1 = new session(1, 60, 25, new list<string>{ "Wifi" }, nullptr);
-	session* session2 = new session(2, 30, 20, new list<string>{ "Projector", "Speaker" }, nullptr);
-	session* session3 = new session(3, 15, 20, new list<string>{ "Wifi" }, nullptr);
+	Session* session1 = new Session(1, 120, 25, list<string>{ "Wifi" }, list<int>{ 1 });
+	Session* session2 = new Session(2, 30, 20, list<string>{ "Projector", "Speaker" }, list<int>{ 2 });
+	Session* session3 = new Session(3, 45, 20, list<string>{ "Wifi" }, list<int>{ 2 });
+	Session* session4 = new Session(4, 50, 40, list<string>{ "Projector", "Speaker" }, list<int>{ 2 });
+	Session* session5 = new Session(5, 45, 40, list<string>{ "Projector", "Speaker" }, list<int>{ 1 });
+	Session* session6 = new Session(6, 30, 40, list<string>{ "Wifi" }, list<int>{ 1 });
 
-	sessionList = { session1, session2, session3 };
+	sessionList = { session1, session2, session3, session4, session5 };
 
 	// Call scheduling algorithm
-	list<room*> scheduledRooms = schedule(sessionList, emptyRoomList);
+	list<Room*> scheduledRooms = schedule(sessionList, emptyRoomList);
 
 	printSessions(sessionList);
 	printSchedule(scheduledRooms);
