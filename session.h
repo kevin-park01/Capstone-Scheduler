@@ -6,7 +6,7 @@
 #include <cmath>
 using namespace std;
 
-extern const int ROOM_START;
+extern const unsigned int ROOM_START;
 extern const double INTERVAL;
 
 struct Session
