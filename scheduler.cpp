@@ -2,10 +2,13 @@
 #include <stdexcept>
 #include "session.h"
 
-const int ROOM_START = 6;  // 6 a.m. 24-hour clock 
+unsigned const int ROOM_START = 6;  // 6 a.m. 24-hour clock 
 const double INTERVAL = 15.0;    // minutes
+unsigned int BUFFER = 30; // buffer duration in minutes
+static Session* buffer = new Session(0, BUFFER, 0);  // all buffer 'sessions' are references to this, note that it should have a reserved sessionID
 
-bool assignSession(Session* session, Room* room, int timeSlots, list<Room*> roomList) 
+
+bool assignSession(Session* session, Room* room, int timeSlots, list<Room*> roomList)
 {
 	bool timeCompatible = false, speakerCompatible = true;
 	int currSessionIndex = (int)ceil(60 * (room->startTime - ROOM_START) / INTERVAL);		// Initialize current index to index where room opens
@@ -20,10 +23,10 @@ bool assignSession(Session* session, Room* room, int timeSlots, list<Room*> room
 		{
 			currSessionIndex++;
 			// Check if the interval is long enough to fit the session
-			if (currSessionIndex - leftIndex == timeSlots) 		
+			if (currSessionIndex - leftIndex == timeSlots)
 			{
 				// Check other rooms for overlapping speakers
-				for (Room* scheduledRoom : roomList) 		
+				for (Room* scheduledRoom : roomList)
 				{
 					if (!speakerCompatible)
 					{
@@ -34,14 +37,14 @@ bool assignSession(Session* session, Room* room, int timeSlots, list<Room*> room
 					for (int j = leftIndex; j < leftIndex + timeSlots; j++)
 					{
 						// A time slot is available if it is a null pointer
-						if (!scheduledRoom->schedule.at(j))		
+						if (!scheduledRoom->schedule.at(j))
 						{
 							continue;
 						}
 
 						// Compare speakers at the same index in two different rooms
 						scheduledRoom->schedule.at(j)->speaker.sort();
-						if (session->speaker == scheduledRoom->schedule.at(j)->speaker) 		
+						if (session->speaker == scheduledRoom->schedule.at(j)->speaker)
 						{
 							speakerCompatible = false;
 							currSessionIndex = leftIndex;
@@ -49,7 +52,7 @@ bool assignSession(Session* session, Room* room, int timeSlots, list<Room*> room
 						}
 					}
 				}
-				
+
 				if (speakerCompatible)
 				{
 					timeCompatible = true;
@@ -62,9 +65,20 @@ bool assignSession(Session* session, Room* room, int timeSlots, list<Room*> room
 	// If the schedule has an opening for the session to be scheduled and speakers are not overlapped, then assign the session to appropriate time slots
 	if (timeCompatible)
 	{
-		for (int i = leftIndex; i < leftIndex + timeSlots; i++)
+		int i = leftIndex;
+		for (; i < leftIndex + timeSlots; i++)
 		{
 			room->schedule.at(i) = session;
+		}
+
+		// if at least one time slot after session and buffer, add buffer
+		int buffer_slots = (int)ceil(BUFFER / INTERVAL);
+		if (i + buffer_slots + 1 < room->schedule.size()) 
+		{
+			for (; i < leftIndex + buffer_slots; i++)
+			{
+				room->schedule.at(i) = buffer;
+			}
 		}
 	}
 
@@ -78,11 +92,11 @@ bool checkCompatibility(Session* session, Room* room)
 	// Check equipment compatability
 	session->equipment.sort();
 	room->equipment.sort();
-	if (session->equipment != room->equipment) 
+	if (session->equipment != room->equipment)
 	{
 		equipCompatible = false;
 	}
-	
+
 	// Check estimated capacity of session doesn't exceed max capacity of room
 	if (session->estimatedCapacity > room->maxCapacity)
 	{
@@ -160,7 +174,7 @@ void printSchedule(list<Room*> scheduledRooms)  // Print each room that has been
 		int counter = 0;
 		for (Session* session : room->schedule)
 		{
-			if(counter % 4 == 0) {
+			if (counter % 4 == 0) {
 				cout << "|  ";
 			}
 			counter += 1;
