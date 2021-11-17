@@ -14,21 +14,23 @@ struct Session
     unsigned int sessionId;
     unsigned int duration;  // in minutes
     unsigned int estimatedCapacity;
+    string format;
     list<string> equipment;
     list<int> speaker;
 
-    Session(unsigned int sessionId, unsigned int duration, unsigned int estimatedCapacity, list<string> equipment, list<int> speaker)
+    Session(unsigned int sessionId, unsigned int duration, unsigned int estimatedCapacity, string format, list<string> equipment, list<int> speaker)
     {
         this->sessionId = sessionId;
         this->duration = duration;
         this->estimatedCapacity = estimatedCapacity;
+        this->format = format;
         this->equipment = equipment;
         this->speaker = speaker;
     }
 
-    Session(unsigned int sessionId, unsigned int duration, unsigned int estimatedCapacity)
+    Session(unsigned int sessionId, unsigned int duration, unsigned int estimatedCapacity, string format)
     {
-        Session(sessionId, duration, estimatedCapacity, list<string>(), list<int>());
+        Session(sessionId, duration, estimatedCapacity, format, list<string>(), list<int>());
     }
 };
 
@@ -36,6 +38,7 @@ struct Room
 {
     unsigned int roomId, maxCapacity;
     unsigned int startTime, endTime;
+    string format;
     list<string> equipment;
     vector<Session*> schedule;
 
@@ -57,12 +60,13 @@ struct Room
         }
     }
 
-    Room(int roomId, int maxCapacity, int startTime, int endTime, list<string> equipment)
+    Room(int roomId, int maxCapacity, int startTime, int endTime, string format, list<string> equipment)
     {
         this->roomId = roomId;
         this->maxCapacity = maxCapacity;
         this->startTime = startTime;
         this->endTime = endTime;
+        this->format = format;
         this->equipment = equipment;
         initializeSchedule();
     }
