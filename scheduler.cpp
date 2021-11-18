@@ -1,11 +1,13 @@
 #include <iostream>
 #include <stdexcept>
 #include "session.h"
+#include "parser.h"
+
 
 unsigned const int ROOM_START = 6;  // 6 a.m. 24-hour clock 
 const double INTERVAL = 15.0;    // minutes
 unsigned int BUFFER = 30; // buffer duration in minutes
-static Session* buffer = new Session(0, BUFFER, 0);  // all buffer 'sessions' are references to this, note that it should have a reserved sessionID
+static Session* buffer = new Session(0, BUFFER, 0,"");  // all buffer 'sessions' are references to this, note that it should have a reserved sessionID
 
 
 bool assignSession(Session* session, Room* room, int timeSlots, list<Room*> roomList)
@@ -202,7 +204,7 @@ int main()
 {
 	list<Room*> emptyRoomList;         // List that initially contains every room available to be scheduled
 	list<Session*> sessionList;     // List that contains sessions to be scheduled
-
+	/*
 	// Empty rooms
 	Room* room1 = new Room(1, 50, 7, 14, "", list<string>());
 	Room* room2 = new Room(2, 100, 8, 14, "", list<string>());
@@ -218,6 +220,11 @@ int main()
 	Session* session6 = new Session(6, 30, 40, "Roundtable", list<string>{ "Wifi" }, list<int>{ 1 });
 
 	sessionList = { session1, session2, session3, session4, session5 };
+*/
+	emptyRoomList = ParseRooms();
+	sessionList = ParseSession();
+
+	
 
 	// Call scheduling algorithm
 	list<Room*> scheduledRooms = schedule(sessionList, emptyRoomList);
