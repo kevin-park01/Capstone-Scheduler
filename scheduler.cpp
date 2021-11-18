@@ -1,11 +1,13 @@
 #include <iostream>
 #include <stdexcept>
 #include "session.h"
+#include "parser.h"
+
 
 unsigned const int ROOM_START = 6;  // 6 a.m. 24-hour clock 
 const double INTERVAL = 15.0;    // minutes
 unsigned int BUFFER = 30; // buffer duration in minutes
-static Session* buffer = new Session(0, BUFFER, 0);  // all buffer 'sessions' are references to this, note that it should have a reserved sessionID
+static Session* buffer = new Session(0, BUFFER, 0,"");  // all buffer 'sessions' are references to this, note that it should have a reserved sessionID
 
 
 bool assignSession(Session* session, Room* room, int timeSlots, list<Room*> roomList)
@@ -87,7 +89,7 @@ bool assignSession(Session* session, Room* room, int timeSlots, list<Room*> room
 
 bool checkCompatibility(Session* session, Room* room)
 {
-	bool equipCompatible = true, capCompatible = true;
+	bool equipCompatible = true, capCompatible = true, formatCompatible = true;
 
 	// Check equipment compatability
 	session->equipment.sort();
@@ -103,7 +105,12 @@ bool checkCompatibility(Session* session, Room* room)
 		capCompatible = false;
 	}
 
-	return equipCompatible && capCompatible;
+	// Check format compatibility
+	if (session->format != room->format) {
+		formatCompatible = false;
+	}
+
+	return equipCompatible && capCompatible && formatCompatible;
 }
 
 list<Room*> schedule(list<Session*> sessionList, list<Room*> emptyRoomList)     // Schedule sessions into rooms
@@ -135,6 +142,7 @@ list<Room*> schedule(list<Session*> sessionList, list<Room*> emptyRoomList)     
 			Room* newRoom = (emptyRoomList).back();
 			emptyRoomList.pop_back();
 			newRoom->equipment = session->equipment;
+			newRoom->format = session->format;
 			assignSession(session, newRoom, timeSlots, roomList);	// fill up the time slots
 			roomList.push_back(newRoom);
 		}
@@ -150,7 +158,7 @@ void printSessions(list<Session*> sessionList)   // Print each session and equip
 		for (int speaker : session->speaker) {
 			cout << speaker << " ";
 		}
-		cout << "} needs equipment { ";
+		cout << "} needs format " << session->format << " and equipment { ";
 		for (string equipment : session->equipment)
 		{
 			cout << equipment << " ";
@@ -169,7 +177,7 @@ void printSchedule(list<Room*> scheduledRooms)  // Print each room that has been
 		{
 			cout << equipment << " ";
 		}
-		cout << "): " << endl;
+		cout << ", " << room->format << " ): " << endl;
 
 		int counter = 0;
 		for (Session* session : room->schedule)
@@ -196,22 +204,27 @@ int main()
 {
 	list<Room*> emptyRoomList;         // List that initially contains every room available to be scheduled
 	list<Session*> sessionList;     // List that contains sessions to be scheduled
-
+	/*
 	// Empty rooms
-	Room* room1 = new Room(1, 50, 7, 14, list<string>());
-	Room* room2 = new Room(2, 100, 8, 14, list<string>());
+	Room* room1 = new Room(1, 50, 7, 14, "", list<string>());
+	Room* room2 = new Room(2, 100, 8, 14, "", list<string>());
 
 	emptyRoomList = { room2, room1 };
 
 	// Sessions to schedule
-	Session* session1 = new Session(1, 120, 25, list<string>{ "Wifi" }, list<int>{ 1 });
-	Session* session2 = new Session(2, 30, 20, list<string>{ "Projector", "Speaker" }, list<int>{ 2 });
-	Session* session3 = new Session(3, 45, 20, list<string>{ "Wifi" }, list<int>{ 2 });
-	Session* session4 = new Session(4, 50, 40, list<string>{ "Projector", "Speaker" }, list<int>{ 2 });
-	Session* session5 = new Session(5, 45, 40, list<string>{ "Projector", "Speaker" }, list<int>{ 1 });
-	Session* session6 = new Session(6, 30, 40, list<string>{ "Wifi" }, list<int>{ 1 });
+	Session* session1 = new Session(1, 120, 25, "Roundtable", list<string>{ "Wifi" }, list<int>{ 1 });
+	Session* session2 = new Session(2, 30, 20, "Panel", list<string>{ "Projector", "Speaker" }, list<int>{ 2 });
+	Session* session3 = new Session(3, 45, 20, "Roundtable", list<string>{ "Wifi" }, list<int>{ 2 });
+	Session* session4 = new Session(4, 50, 40, "Panel", list<string>{ "Projector", "Speaker" }, list<int>{ 2 });
+	Session* session5 = new Session(5, 45, 40, "Panel", list<string>{ "Projector", "Speaker" }, list<int>{ 1 });
+	Session* session6 = new Session(6, 30, 40, "Roundtable", list<string>{ "Wifi" }, list<int>{ 1 });
 
 	sessionList = { session1, session2, session3, session4, session5 };
+*/
+	emptyRoomList = ParseRooms();
+	sessionList = ParseSession();
+
+	
 
 	// Call scheduling algorithm
 	list<Room*> scheduledRooms = schedule(sessionList, emptyRoomList);
