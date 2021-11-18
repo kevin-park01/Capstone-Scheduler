@@ -69,24 +69,14 @@ list<Room*> ParseRooms(){
     }
         */
         Room* room2= new Room(tempID, tempmaxcap, tempStartTime, tempEndTime,tempFormat , list<string>());
-
   
-
         tempEmptyRoomList.push_back(room2);
-
-
-
 
         if (!mystream)
             break; // something went wrong reading the line
-
-        
-    
+   
 }
 fin.close();
-
-
-
     
      return tempEmptyRoomList;
 
@@ -103,8 +93,6 @@ list<Session*> ParseSession(){
     
     string line1;
 
-   
-    
   
     while (getline(fin, line1) && !line1.empty()) {
      
@@ -124,9 +112,6 @@ list<Session*> ParseSession(){
         getline(mystream, temp, ',');
         string tempFormat = temp;
 
-      
-
-        
         list<string> tempEquipment;
 
         getline(mystream, temp, ',');
@@ -183,12 +168,9 @@ list<Session*> ParseSession(){
              temporary.push_back(hold);
         }
 */
-
        
         Session* session1 = new Session(tempSessionId, tempSessionDuration, tempEstimatedCapacity,tempFormat, tempEquipment, tempSpeaker);
         
-        
-
         tempEmptySessionList.push_back(session1);
 
         if (!mystream)
@@ -196,9 +178,7 @@ list<Session*> ParseSession(){
 
 
     }
-
-    
-    
+  
     fin.close();
     
      return tempEmptySessionList;
