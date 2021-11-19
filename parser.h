@@ -46,7 +46,7 @@ list<Room*> ParseRooms(){
 
         string tempFormat = temp;
 
-        getline(mystream, temp, ',');
+        getline(mystream, temp, ' ');
         /*
         getline(mystream, temp, ',');
 
