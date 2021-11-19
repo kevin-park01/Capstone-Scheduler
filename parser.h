@@ -46,9 +46,9 @@ list<Room*> ParseRooms(){
 
         string tempFormat = temp;
 
-        getline(mystream, temp, ' ');
-        /*
         getline(mystream, temp, ',');
+        
+       // getline(mystream, temp, ',');
 
         list<string> words;
 
@@ -63,12 +63,7 @@ list<Room*> ParseRooms(){
              words.push_back(s);
         }
   
-        //words = NULL;
-        for (auto const &i: words) {
-         
-    }
-        */
-        Room* room2= new Room(tempID, tempmaxcap, tempStartTime, tempEndTime,tempFormat , list<string>());
+        Room* room2= new Room(tempID, tempmaxcap, tempStartTime, tempEndTime, tempFormat , list<string>());
   
         tempEmptyRoomList.push_back(room2);
 
