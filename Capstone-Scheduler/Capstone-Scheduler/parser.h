@@ -9,7 +9,7 @@
 using namespace std;
 
 
-list<Room*> ParseRooms() 
+list<Room*> ParseRooms()
 {
 	fstream fin;
 	list<Room*> tempEmptyRoomList;
@@ -17,7 +17,7 @@ list<Room*> ParseRooms()
 
 	fin.open("RoomInput.csv", ios::in); //open input
 
-	while (getline(fin, line) && !line.empty()) 
+	while (getline(fin, line) && !line.empty())
 	{
 		stringstream mystream(line);
 		string temp;
@@ -72,7 +72,7 @@ list<Room*> ParseRooms()
 };
 
 
-list<Session*> ParseSession() 
+list<Session*> ParseSession()
 {
 	fstream fin;
 	list<Session*> tempEmptySessionList;
@@ -80,7 +80,7 @@ list<Session*> ParseSession()
 
 	fin.open("sess.csv", ios::in);
 
-	while (getline(fin, line1) && !line1.empty()) 
+	while (getline(fin, line1) && !line1.empty())
 	{
 		stringstream mystream(line1);
 		list<string> tempEquipment;
@@ -101,18 +101,18 @@ list<Session*> ParseSession()
 
 		getline(mystream, temp, ',');
 
-		string d;	
+		string d;
 		istringstream iss(temp);
-		while (getline(iss, d, ' ')) 
+		while (getline(iss, d, ' '))
 		{
 			tempEquipment.push_back(d);
 		}
 
 		getline(mystream, temp, ',');
-		
-		string r;	
+
+		string r;
 		istringstream isss(temp);
-		while (getline(isss, r, ' ')) 
+		while (getline(isss, r, ' '))
 		{
 			int hold = stoi(r);
 			tempSpeaker.push_back(hold);

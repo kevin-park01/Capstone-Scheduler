@@ -1,0 +1,22 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+/Capstone-Scheduler/.vs/Capstone-Scheduler/v16/Browse.VC.opendb
+/.vs/Capstone/v16/.suo
+/Capstone-Scheduler/Capstone-Scheduler/RCa22120
+/Capstone-Scheduler/Capstone-Scheduler/.vs/Capstone-Scheduler/v16/.suo
+/Capstone-Scheduler/.vs/Capstone-Scheduler/v16/ipch/AutoPCH/26a6d889d34bb667/PARSER.ipch
+/Capstone-Scheduler/.vs/Capstone-Scheduler/v16/ipch/AutoPCH/144781a8b85ab181/SCHEDULER.ipch
+/Capstone-Scheduler/.vs/Capstone-Scheduler/v16/Browse.VC.db
+/Capstone-Scheduler/.vs/Capstone-Scheduler/v16/Browse.VC.db-shm
+/Capstone-Scheduler/.vs/Capstone-Scheduler/v16/ipch/AutoPCH/9ffc932e9f1f98f4/SCHEDULER.ipch
+/Capstone-Scheduler/.vs/Capstone-Scheduler/v16/ipch/AutoPCH/670f6f802447f0d0/PARSER.ipch
+/Capstone-Scheduler/Capstone-Scheduler/.vs/Capstone-Scheduler/v16/Browse.VC.db
+/Capstone-Scheduler/.vs/Capstone-Scheduler/v16/ipch/AutoPCH/263a5c8f90a44945/SESSION.ipch
+/Capstone-Scheduler/.vs/Capstone-Scheduler/v16/Browse.VC.db-wal
+/Capstone-Scheduler/.vs/Capstone-Scheduler/v16/ipch/AutoPCH/58c666a311de74ab/SCHEDULER.ipch
+/.vs/slnx.sqlite
+/.vs/Capstone/v16/Browse.VC.db
+/Capstone-Scheduler/.vs/Capstone-Scheduler/v16/.suo
+/.vs/Capstone/v16/ipch/AutoPCH/188369cd2eddc413/SCHEDULER.ipch
