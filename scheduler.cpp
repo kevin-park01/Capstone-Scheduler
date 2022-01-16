@@ -194,7 +194,7 @@ void printSchedule(list<Room*> scheduledRooms)  // Print each room that has been
 			if (session != nullptr)
 			{
 				if (session == buffer1)
-					cout << "buffer  ";
+					cout << "b  ";
 				else
 					cout << session->sessionId << "  ";
 			}
