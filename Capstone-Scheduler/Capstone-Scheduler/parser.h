@@ -148,7 +148,7 @@ list<Session*> ParseSession()
 		}
 */
 
-		Session* session1 = new Session(tempSessionId, tempSessionDuration, tempEstimatedCapacity, tempFormat, tempEquipment, tempSpeaker);
+		Session* session1 = new Session(tempSessionId, tempSessionDuration, tempEstimatedCapacity, tempFormat, "", tempEquipment, tempSpeaker);
 		tempEmptySessionList.push_back(session1);
 
 		if (!mystream)	break; // something went wrong reading the line

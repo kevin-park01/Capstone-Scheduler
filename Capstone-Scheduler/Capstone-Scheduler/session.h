@@ -11,33 +11,36 @@ extern const double INTERVAL;
 
 struct Session
 {
-    unsigned int sessionId;
-    unsigned int duration;  // in minutes
-    unsigned int estimatedCapacity;
+    int sessionId;
+    int duration;  // in minutes
+    int estimatedCapacity;
     string format;
+    string topic;
     list<string> equipment;
     list<int> speaker;
 
-    Session(unsigned int sessionId, unsigned int duration, unsigned int estimatedCapacity, string format, list<string> equipment, list<int> speaker)
+    Session(unsigned int sessionId, unsigned int duration, unsigned int estimatedCapacity, string format, string topic, list<string> equipment, list<int> speaker)
     {
         this->sessionId = sessionId;
         this->duration = duration;
         this->estimatedCapacity = estimatedCapacity;
         this->format = format;
+        this->topic = topic;
         this->equipment = equipment;
         this->speaker = speaker;
     }
 
-    Session(unsigned int sessionId, unsigned int duration, unsigned int estimatedCapacity, string format)
+    Session(unsigned int sessionId, unsigned int duration, unsigned int estimatedCapacity, string format, string topic)
     {
-        Session(sessionId, duration, estimatedCapacity, format, list<string>(), list<int>());
+        Session(sessionId, duration, estimatedCapacity, format, topic, list<string>(), list<int>());
     }
 };
 
+
 struct Room
 {
-    unsigned int roomId, maxCapacity;
-    unsigned int startTime, endTime;
+    int roomId, maxCapacity;
+    int startTime, endTime;
     string format;
     list<string> equipment;
     vector<Session*> schedule;

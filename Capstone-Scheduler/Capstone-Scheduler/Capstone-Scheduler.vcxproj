@@ -22,7 +22,9 @@
     <ClCompile Include="scheduler.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="parser.h" />
+    <ClInclude Include="parser.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
+    </ClInclude>
     <ClInclude Include="session.h" />
   </ItemGroup>
   <ItemGroup>
