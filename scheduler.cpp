@@ -1,8 +1,8 @@
 #include <iostream>
 #include <stdexcept>
+#include <algorithm>
 #include "session.h"
 #include "parser.h"
-
 
 unsigned const int ROOM_START = 6;  // 6 a.m. 24-hour clock 
 const double INTERVAL = 15.0;    // minutes
@@ -87,6 +87,10 @@ bool assignSession(Session* session, Room* room, unsigned int timeSlots, list<Ro
 	return timeCompatible;
 }
 
+// Check if l1 is a subset of l2
+bool checkSubset(list<string> l1, list<string> l2) {
+	return includes(l1.begin(), l1.end(), l2.begin(), l2.end());
+}
 
 bool checkCompatibility(Session* session, Room* room)
 {
@@ -95,7 +99,7 @@ bool checkCompatibility(Session* session, Room* room)
 	// Check equipment compatability
 	session->equipment.sort();
 	room->equipment.sort();
-	if (session->equipment != room->equipment)
+	if (!checkSubset(session->equipment, room->equipment))
 	{
 		equipCompatible = false;
 	}

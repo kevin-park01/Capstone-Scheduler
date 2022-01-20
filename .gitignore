@@ -37,3 +37,10 @@
 /Capstone-Scheduler/Capstone-Scheduler/x64/Debug/Capstone-Scheduler.ilk
 /Capstone-Scheduler/Capstone-Scheduler/x64/Debug/Capstone-Scheduler.exe.recipe
 /Capstone-Scheduler/Capstone-Scheduler/x64/Debug/Capstone-Scheduler.Build.CppClean.log
+*.vcxproj
+*.filters
+*.user
+*.sln
+*.exe
+.vscode
+.DS_store
