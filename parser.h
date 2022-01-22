@@ -97,6 +97,9 @@ list<Session*> ParseSession()
 		int tempEstimatedCapacity = stoi(temp);
 
 		getline(mystream, temp, ',');
+		string tempTitle = temp;
+
+		getline(mystream, temp, ',');
 		string tempFormat = temp;
 
 		getline(mystream, temp, ',');
@@ -148,7 +151,7 @@ list<Session*> ParseSession()
 		}
 */
 
-		Session* session1 = new Session(tempSessionId, tempSessionDuration, tempEstimatedCapacity, tempFormat, tempEquipment, tempSpeaker);
+		Session* session1 = new Session(tempSessionId, tempSessionDuration, tempEstimatedCapacity, tempTitle, tempFormat, "", tempEquipment, tempSpeaker);
 		tempEmptySessionList.push_back(session1);
 
 		if (!mystream)	break; // something went wrong reading the line
