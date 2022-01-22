@@ -14,25 +14,27 @@ struct Session
     int sessionId;
     int duration;  // in minutes
     int estimatedCapacity;
+    string title;
     string format;
     string topic;
     list<string> equipment;
     list<int> speaker;
 
-    Session(unsigned int sessionId, unsigned int duration, unsigned int estimatedCapacity, string format, string topic, list<string> equipment, list<int> speaker)
+    Session(unsigned int sessionId, unsigned int duration, unsigned int estimatedCapacity, string title, string format, string topic, list<string> equipment, list<int> speaker)
     {
         this->sessionId = sessionId;
         this->duration = duration;
         this->estimatedCapacity = estimatedCapacity;
+        this->title = title;
         this->format = format;
         this->topic = topic;
         this->equipment = equipment;
         this->speaker = speaker;
     }
 
-    Session(unsigned int sessionId, unsigned int duration, unsigned int estimatedCapacity, string format, string topic)
+    Session(unsigned int sessionId, unsigned int duration, unsigned int estimatedCapacity, string title, string format, string topic)
     {
-        Session(sessionId, duration, estimatedCapacity, format, topic, list<string>(), list<int>());
+        Session(sessionId, duration, estimatedCapacity, title, format, topic, list<string>(), list<int>());
     }
 };
 
