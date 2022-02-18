@@ -1,14 +1,13 @@
 from dataclasses import dataclass, field
 import math
 
-
 # Gloabl constants
 ROOM_START = 6      # Earliest time (military time) a room can open
 ROOM_END = 12       # Latest time (military time) a room can close
 INTERVAL = 30       # Time (minutes) of each schedule slot
 BUFFER = 30         # Buffer time (minutes) in between sessions
 
-# Global logs used for constraint checking
+# Global logs used for constraint checking  
 speaker_log = []    # Records which speakers will be speaking at indexes of all schedules
 topic_log = []      # Records what topics will be presented at indexes of all schedules
 
