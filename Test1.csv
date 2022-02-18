@@ -1,0 +1,3 @@
+room_id, maxCapacity, start_time, end_time, Format, equipment
+1, 10, 6, 12,,
+2, 10, 7, 12,,
