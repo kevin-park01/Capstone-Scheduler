@@ -1,0 +1,24 @@
+<!DOCTTYPE html>
+<html>
+    <head>
+        <title>Flask Test</title>
+    </head>
+    <body>
+        <table>
+            <tr>
+                <th>Session ID</th>
+                <th>Time Slot</th>
+                <th>Room ID</th>
+                <th>Date</th>
+            </tr>
+            {% for session in schedule %}
+                <tr>
+                    <td>{{ session.session_id }}</td>
+                    <td>{{ session.start_time.time() }} - {{ session.end_time.time() }}</td>
+                    <td>{{ session.assigned_room }}</td>
+                    <td>{{ session.start_time.month }}/{{ session.start_time.day }}</td>
+                </tr> 
+            {% endfor %}
+          </table>
+    </body>
+</html>

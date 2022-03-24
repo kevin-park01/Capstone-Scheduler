@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+from datetime import datetime
 
 
 # A session represents a meeting or event to be scheduled. Each session should have pre-determined 
@@ -6,22 +7,29 @@ from dataclasses import dataclass, field
 # without breaking constraints.
 @dataclass
 class Session:
-    session_id: int                  # Unique session identifier
-    duration: int                    # Time in minutes that a session lasts
-    est_capcity: int                 # Estimated number of attendees
-    title: str                       # Title of session
-    format: str                      # Format of session (e.g., roundtable)
-    topic: str                       # Topic of session (e.g., "African History")
-    equipment: list[str]             # List of equipment needed (e.g., WiFi)
-    speaker: list[int]               # List of speaker ID's
-    start_time: str = ''             # Time of day that session is scheduled to start (e.g., '9:30')
-    end_time: str = ''               # Time of day that session is scheduled to end (e.g., '12:00')
+    session_id: int                      # Unique session identifier
+    duration: int                        # Time in minutes that a session lasts
+    est_capcity: int                     # Estimated number of attendees
+    title: str                           # Title of session
+    format: str                          # Format of session (e.g., roundtable)
+    topic: str                           # Topic of session (e.g., "African History")
+    type: str                            # Type of the session (e.g., Social Event)
+    equipment: list[str]                 # List of equipment needed (e.g., WiFi)
+    speaker: list[int]                   # List of speaker ID's
+    assigned_room: int = 0               # Room ID that the session is scheduled into
+    start_time: datetime = datetime(1, 1, 1)    # Time of day that session is scheduled to start
+    end_time: datetime = datetime(1, 1, 1)      # Time of day that session is scheduled to end
 
 
     # Set session start and end time
-    def set_time(self, start: str, end: str):
+    def set_time(self, start: datetime, end: datetime):
         self.start_time = start
         self.end_time = end
+
+    
+    # Set scheduled room ID
+    def set_room(self, room_id: int):
+        self.assigned_room = room_id
 
 
 # A room is where sessions will be scheduled in. Each room will contain scheduled sessions
@@ -72,7 +80,7 @@ class Room:
 
 
     # Add the session to the specified day's schedule
-    def add_session(self, session: Session, day: int, start_times: list[str], end_times: list[str], speaker_log, topic_log) -> bool:
+    def add_session(self, session: Session, day: int, start_times: list[datetime], end_times: list[datetime], speaker_log, topic_log) -> bool:
         # Check if the session and room are compatible
         if not self.check_compatible(session):
             return False
@@ -81,8 +89,11 @@ class Room:
 
         for i in range(len(sched)):
             is_valid = True
+            slot_duration = (end_times[i] - start_times[i]).total_seconds() / 60.0
 
             if sched[i] != '_':                                             # Check if the schedule at this index already has a session
+                continue
+            elif session.duration > slot_duration:                          # Check if session duration exceeds slot duration
                 continue
             elif set(speaker_log[day][i]).intersection(session.speaker):    # Check if there is a speaker conflict
                 continue
@@ -91,6 +102,7 @@ class Room:
 
             # Insert the session if there is enough open space
             session.set_time(start_times[i], end_times[i])
+            session.set_room(self.room_id)
             self.schedule[day][i] = session
 
             # Update speaker and topic logs
@@ -102,7 +114,7 @@ class Room:
 
 
     # Print daily schedules for this room
-    def print_schedule(self, start_times: list[str], end_times: list[str]):
+    def print_schedule(self, start_times: list[datetime], end_times: list[datetime]):
         print(f'Room {self.room_id} Schedule')
         print(f'   Equipment: {self.equipment}')
         print(f'   Format: {self.format}')
@@ -110,9 +122,9 @@ class Room:
             print(f'\n   Day {i}:')
             for j in range(len(self.schedule[i])):
                 if(self.schedule[i][j] == '_'):
-                    print(f'   {start_times[j]} - {end_times[j]}: {self.schedule[i][j]}')
+                    print(f'   {start_times[j].time()} - {end_times[j].time()}: {self.schedule[i][j]}')
                 else:
-                    print(f'   {start_times[j]} - {end_times[j]}: {self.schedule[i][j].session_id}')
+                    print(f'   {start_times[j].time()} - {end_times[j].time()}: {self.schedule[i][j].session_id}')
         print()
 
 
@@ -123,10 +135,11 @@ class Room:
 # it for another day.
 @dataclass
 class Schedule:
-    start_times: list[str]                                            # List of schedule interval start times
-    end_times: list[str]                                              # List of schedule interval end times
+    start_times: list[datetime]                                       # List of schedule interval start times
+    end_times: list[datetime]                                         # List of schedule interval end times
     days_scheduled: int = 0                                           # Number of days scheduled
     rooms_sched: dict[int, Room] = field(default_factory=dict)        # Maps room ID's to rooms
+    sessions_sched: list[Session] = field(default_factory=list)       # List of scheduled sessions
     sessions_not_sched: list[Session] = field(default_factory=list)   # List of session not able to be scheduled
     speaker_log: list[list[list[str]]] = field(default_factory=list)  # List of speakers in each time slot for each day
     topic_log: list[list[list[str]]] = field(default_factory=list)    # List of topics in each time slot for each day
@@ -142,6 +155,41 @@ class Schedule:
     def print_schedule(self):
         for room in self.rooms_sched.values():
             room.print_schedule(self.start_times, self.end_times)
+        
+        if len(self.sessions_not_sched) > 0:
+            print('Could not schedule sessions:')
+            for sess in self.sessions_not_sched:
+                print(sess.session_id)
+
+    
+    # Return scheduled sessions in a list
+    def get_scheduled_sessions(self) -> list[Session]:
+        return self.sessions_sched
+
+
+    # Return unscheduled sessions in a list
+    def get_unscheduled_sessions(self) -> list[Session]:
+        return self.sessions_not_sched
+
+
+    # Return a list of room formats needed by session that haven't been schedule yet
+    def get_room_formats(self) -> set[str]:
+        formats = set()
+
+        for sess in self.sessions_not_sched:
+            formats.add(sess.format)
+
+        return formats
+
+    
+    # Return a list of session topics
+    def get_session_topics(self) -> set[str]:
+        topics = set()
+
+        for sess in self.sessions_not_sched:
+            topics.add(sess.topic)
+
+        return topics
 
 
     # Create a schedule for one day. Intended to be called once each day
@@ -168,6 +216,7 @@ class Schedule:
 
                 if self.rooms_sched[room.room_id].add_session(sess, day, self.start_times, self.end_times, self.speaker_log, self.topic_log):
                     is_scheduled = True
+                    self.sessions_sched.append(sess)
                     break
             
             if not is_scheduled:
@@ -183,10 +232,3 @@ class Schedule:
             self.create_day_schedule(session_list, rooms, day)
             session_list = self.sessions_not_sched
             day += 1
-
-        # Print schedule
-        self.print_schedule()
-        if len(session_list) > 0:
-            print('Could not schedule sessions:')
-            for sess in session_list:
-                print(sess.session_id)
