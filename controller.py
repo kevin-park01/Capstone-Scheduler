@@ -20,9 +20,13 @@ year = datetime.now().year
 month = datetime.now().month
 start_times = [datetime(year, month, 1, 7, 0), datetime(year, month, 1, 8, 30)]
 end_times = [datetime(year, month, 1, 8, 15), datetime(year, month, 1, 9, 45)]
+days = [datetime(year, month, 13), datetime(year, month, 14), datetime(year, month, 15), datetime(year, month, 16)]
 
-day_schedule = schedule.Schedule(start_times, end_times)
+day_schedule = schedule.Schedule(start_times, end_times, sessions, rooms, days)
+day_schedule.init()
+selected_day_indexes = [2, 3]
 selected_sessions = sessions
+selected_rooms = rooms
 
 
 app = Flask(__name__)
@@ -34,8 +38,9 @@ def home():
 
 @app.route('/schedule')
 def create_schedule():
-    day_schedule.create_schedule(selected_sessions, rooms, 2)
+    day_schedule.create_schedule(selected_sessions, selected_rooms, selected_day_indexes)
     sessions_sched = day_schedule.get_scheduled_sessions()
+
     return render_template('schedule.html', schedule=sessions_sched)
 
 
