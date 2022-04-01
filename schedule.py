@@ -2,6 +2,15 @@ from dataclasses import dataclass, field
 from datetime import datetime
 
 
+# A speaker is someone who will be assigned to one or more sessions to present.
+@dataclass
+class Speaker:
+    speaker_id: int                 # Unique speaker identifer
+    first_name: str                 # First name of speaker
+    last_initial: str               # Last inital of speaker
+    session_ids: list[int]          # ID of session the speaker is assigned to
+
+
 # A session represents a meeting or event to be scheduled. Each session should have pre-determined 
 # attributes that cannot be left empty because rooms require session attributes to schedule sessions 
 # without breaking constraints.
@@ -154,6 +163,7 @@ class Schedule:
     all_sessions: list[Session]                                           # List of all sessions
     all_rooms: list[Room]                                                 # List of all rooms
     days: list[datetime]                                                  # List of all days
+    speakers: list[Speaker]                                               # List of all speakers
     days_scheduled: int = 0                                               # Number of days scheduled
     rooms_sched: dict[int, Room] = field(default_factory=dict)            # Maps room ID's to rooms
     sessions_scheduled: list[Session] = field(default_factory=list)       # List of scheduled sessions
@@ -191,6 +201,15 @@ class Schedule:
                 print(sess.session_id)
 
     
+    # Get speaker object given the speaker's ID
+    def get_speaker(self, id: int) -> Speaker:
+        for speaker in self.speakers:
+            if speaker.speaker_id == id:
+                return speaker
+        
+        return None
+
+
     # Return scheduled sessions in a list
     def get_scheduled_sessions(self) -> list[Session]:
         return self.sessions_scheduled

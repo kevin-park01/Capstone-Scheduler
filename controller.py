@@ -13,8 +13,12 @@ session4 = schedule.Session(4, 75, 5, 'Intro to BS 2', 'Lecture', 'BS', 'Social 
 session5 = schedule.Session(5, 75, 5, 'Intro to ENG 1', 'Lecture', 'BS', 'Social Event', ['Arts'], ['Wifi'], [2])
 session6 = schedule.Session(6, 75, 5, 'Intro to ENG 2', 'Lecture', 'BS', 'Social Event', ['Arts'], ['Wifi' ], [2])
 
+speaker1 = schedule.Speaker(1, 'Bob', 'B', [1, 2])
+speaker2 = schedule.Speaker(1, 'Bob', 'B', [3, 4, 5, 6])
+
 sessions = [session1, session2, session3, session4, session5, session6]
 rooms = [room1, room2]
+speakers = [speaker1, speaker2]
 
 
 year = datetime.now().year
@@ -24,7 +28,7 @@ end_times = [datetime(1, 1, 1, 8, 15), datetime(1, 1, 1, 9, 45)]
 days = [datetime(year, month, 13), datetime(year, month, 14), datetime(year, month, 15), datetime(year, month, 16)]
 
 
-day_schedule = schedule.Schedule(start_times, end_times, sessions, rooms, days)
+day_schedule = schedule.Schedule(start_times, end_times, sessions, rooms, days, speakers)
 day_schedule.init()
 
 
