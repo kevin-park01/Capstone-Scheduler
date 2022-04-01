@@ -14,7 +14,7 @@ session5 = schedule.Session(5, 75, 5, 'Intro to ENG 1', 'Lecture', 'BS', 'Social
 session6 = schedule.Session(6, 75, 5, 'Intro to ENG 2', 'Lecture', 'BS', 'Social Event', ['Arts'], ['Wifi' ], [2])
 
 speaker1 = schedule.Speaker(1, 'Bob', 'B', [1, 2])
-speaker2 = schedule.Speaker(1, 'Bob', 'B', [3, 4, 5, 6])
+speaker2 = schedule.Speaker(1, 'Maria', 'M', [3, 4, 5, 6])
 
 sessions = [session1, session2, session3, session4, session5, session6]
 rooms = [room1, room2]
@@ -43,6 +43,26 @@ def home():
     filter_topics = ['CS', 'BS']
     results = day_schedule.get_filtered_sessions(filter_types, filter_formats, filter_sponsors, filter_topics)
 
+    print('Formats:')
+    for format in day_schedule.get_room_formats():
+        print(format)
+    print()
+
+    print('Topics:')
+    for topic in day_schedule.get_session_topics():
+        print(topic)
+    print()
+
+    print('Types:')
+    for type in day_schedule.get_session_types():
+        print(type)
+    print()
+
+    print('Sponsors:')
+    for sponsor in day_schedule.get_session_sponsors():
+        print(sponsor)
+    print()
+
     return render_template('home.html', sessions=results)
 
 
@@ -61,7 +81,7 @@ def create_schedule():
     # Get rooms that match filters and number of available slots for the filtered days and slots
     filter_days = [days[0], days[1], days[2], days[3]]
     filter_times = [start_times[0], start_times[1]]
-    for results in day_schedule.get_filtered_room_availability(filter_days, filter_times, ['Mic', 'Wifi'], 100, ['Roundtable']):
+    for results in day_schedule.get_filtered_room_availability(filter_days, filter_times, ['Mic', 'Wifi'], 100, ['Roundtable', 'Lecture']):
         print(f'Room {results[0].room_id} has {results[1]} slots')
 
     return render_template('schedule.html', schedule=sessions_sched)

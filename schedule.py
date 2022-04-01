@@ -235,7 +235,7 @@ class Schedule:
     def get_room_formats(self) -> set[str]:
         formats = set()
 
-        for sess in self.all_sessions:
+        for sess in self.get_unscheduled_sessions():
             formats.add(sess.format)
 
         return formats
@@ -245,10 +245,30 @@ class Schedule:
     def get_session_topics(self) -> set[str]:
         topics = set()
 
-        for sess in self.all_sessions:
+        for sess in self.get_unscheduled_sessions():
             topics.add(sess.topic)
 
         return topics
+
+
+    # Return a list of session types
+    def get_session_types(self) -> set[str]:
+        types = set()
+
+        for sess in self.get_unscheduled_sessions():
+            types.add(sess.type)
+
+        return types
+
+
+    # Return a list of sponsors
+    def get_session_sponsors(self) -> set[str]:
+        sponsors = set()
+
+        for sess in self.get_unscheduled_sessions():
+            sponsors.update(sess.sponsors)
+
+        return sponsors
 
 
     # Get index of slot in start_times list
