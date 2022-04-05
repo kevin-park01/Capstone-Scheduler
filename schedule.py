@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field
 from datetime import datetime
+import sys
 
 
 # A speaker is someone who will be assigned to one or more sessions to present.
@@ -160,9 +161,9 @@ class Room:
 class Schedule:
     start_times: list[datetime]                                           # List of schedule interval start times
     end_times: list[datetime]                                             # List of schedule interval end times
+    days: list[datetime]                                                  # List of all days
     all_sessions: list[Session]                                           # List of all sessions
     all_rooms: list[Room]                                                 # List of all rooms
-    days: list[datetime]                                                  # List of all days
     speakers: list[Speaker]                                               # List of all speakers
     days_scheduled: int = 0                                               # Number of days scheduled
     rooms_sched: dict[int, Room] = field(default_factory=dict)            # Maps room ID's to rooms
@@ -231,8 +232,8 @@ class Schedule:
         return unscheduled
 
 
-    # Return a list of room formats needed by session that haven't been schedule yet
-    def get_room_formats(self) -> set[str]:
+    # Return a set of session formats needed by sessions that haven't been schedule yet
+    def get_session_formats(self) -> set[str]:
         formats = set()
 
         for sess in self.get_unscheduled_sessions():
@@ -241,7 +242,37 @@ class Schedule:
         return formats
 
     
-    # Return a list of session topics
+    # Return a set of room formats from all rooms
+    def get_room_formats(self) -> set[str]:
+        formats = set()
+
+        for room in self.all_rooms:
+            formats.add(room.format)
+
+        return formats
+
+    
+    # Return a set of all equipment from all rooms
+    def get_room_equipment(self) -> set[str]:
+        equipment = set()
+
+        for room in self.all_rooms:
+            equipment.update(room.equipment)
+        
+        return equipment
+
+
+    # Return a set of all properties from all rooms
+    def get_room_properties(self) -> set[str]:
+        properties = set()
+
+        for room in self.all_rooms:
+            properties.add(room.property)
+
+        return properties
+
+
+    # Return a set of session topics
     def get_session_topics(self) -> set[str]:
         topics = set()
 
@@ -251,7 +282,7 @@ class Schedule:
         return topics
 
 
-    # Return a list of session types
+    # Return a set of session types
     def get_session_types(self) -> set[str]:
         types = set()
 
@@ -261,7 +292,7 @@ class Schedule:
         return types
 
 
-    # Return a list of sponsors
+    # Return a set of sponsors
     def get_session_sponsors(self) -> set[str]:
         sponsors = set()
 
@@ -269,6 +300,28 @@ class Schedule:
             sponsors.update(sess.sponsors)
 
         return sponsors
+
+
+    # Returns the max capcity of all rooms
+    def get_room_max_capacity(self) -> int:
+        max = 0
+
+        for room in self.all_rooms:
+            if room.max_capacity > max:
+                max = room.max_capacity
+        
+        return max
+
+
+    # Returns the smallest capcity of selected sessions
+    def get_session_min_capacity(self, selected_sessions: list[Session]) -> int:
+        min = sys.maxsize
+        
+        for session in selected_sessions:
+            if session.est_capcity < min:
+                min = session.est_capcity
+
+        return min
 
 
     # Get index of slot in start_times list
@@ -312,10 +365,11 @@ class Schedule:
         return compatible_sessions
 
 
-
     # Get list of rooms that match filters and the number of available slots of specified days and times
-    def get_filtered_room_availability(self, days: list[datetime], times: list[datetime], equipment: list[str], capacity: int, formats: list[str]) -> list[tuple()]:
+    def get_filtered_room_availability(self, days: list[datetime], times: list[datetime], equipment: list[str], capacity: int, formats: list[str], selected_sessions: list[Session]) -> list[tuple()]:
         compatible_rooms = []
+
+        min_capacity = self.get_session_min_capacity(selected_sessions)
         
         for room in self.all_rooms:
             num_available = 0
@@ -328,9 +382,11 @@ class Schedule:
 
                     if len(equipment) > 0 and not set(room.equipment).issubset(equipment):      # Check if this room's equipment is a subset of the filtered equipment
                         continue
-                    elif room.max_capacity > capacity:                                          # Check if rooms capacity exceeds the filtered capacity
+                    elif room.max_capacity > capacity:                                          # Check if room's capacity exceeds the filtered capacity
                         continue
-                    elif len(formats) > 0 and not room.format in formats:                       # Check if the rooms format is in the list of filtered formats
+                    elif room.max_capacity < min_capacity:                                      # Check if room's capcity is less than the minimum capacity of selected sessions
+                        continue
+                    elif len(formats) > 0 and not room.format in formats:                       # Check if the room's format is in the list of filtered formats
                         continue
 
                     if room.schedule[day_index][slot_index].session_id == -1:

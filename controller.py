@@ -3,6 +3,11 @@ from flask import Flask, render_template
 from datetime import datetime
 
 
+# 1. Include Parsing Here
+# 2. Call functions to get lists for all start times, end times, days, sessions, rooms, speakers
+# 3. Create Schedule object
+# 4. Call 'init' function for object
+
 room1 = schedule.Room(1, 10, 'Room 1', 'WSCC', 1)
 room2 = schedule.Room(2, 10, 'Room 2', 'WSCC', 1)
 
@@ -28,7 +33,7 @@ end_times = [datetime(1, 1, 1, 8, 15), datetime(1, 1, 1, 9, 45)]
 days = [datetime(year, month, 13), datetime(year, month, 14), datetime(year, month, 15), datetime(year, month, 16)]
 
 
-day_schedule = schedule.Schedule(start_times, end_times, sessions, rooms, days, speakers)
+day_schedule = schedule.Schedule(start_times, end_times, days, sessions, rooms, speakers)
 day_schedule.init()
 
 
@@ -37,10 +42,10 @@ app = Flask(__name__)
 @app.route('/')
 def home():
     # Get sessions that match filters
-    filter_types = ['Social Event']
-    filter_formats = ['Roundtable', 'Lecture']
-    filter_sponsors = ['ASU', 'Fulton', 'Arts']
-    filter_topics = ['CS', 'BS']
+    filter_types = day_schedule.get_session_types()
+    filter_formats = day_schedule.get_session_formats()
+    filter_sponsors = day_schedule.get_session_sponsors()
+    filter_topics = day_schedule.get_session_topics()
     results = day_schedule.get_filtered_sessions(filter_types, filter_formats, filter_sponsors, filter_topics)
 
     print('Formats:')
@@ -79,10 +84,11 @@ def create_schedule():
     day_schedule.print_schedule()
 
     # Get rooms that match filters and number of available slots for the filtered days and slots
-    filter_days = [days[0], days[1], days[2], days[3]]
-    filter_times = [start_times[0], start_times[1]]
-    for results in day_schedule.get_filtered_room_availability(filter_days, filter_times, ['Mic', 'Wifi'], 100, ['Roundtable', 'Lecture']):
-        print(f'Room {results[0].room_id} has {results[1]} slots')
+    filter_days = day_schedule.days
+    filter_times = day_schedule.start_times
+
+    for room, num_available in day_schedule.get_filtered_room_availability(filter_days, filter_times, ['Mic', 'Wifi'], 100, ['Roundtable', 'Lecture'], selected_sessions):
+        print(f'Room {room.room_id} has {num_available} slots')
 
     return render_template('schedule.html', schedule=sessions_sched)
 
