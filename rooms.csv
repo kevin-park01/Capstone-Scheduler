@@ -1,0 +1,68 @@
+﻿Room ID,Property,Room Name,Capacity,Floor
+1,Sheraton,Aspen,100,1
+2,Sheraton,Ballard,60,1
+3,Sheraton,Boren,35,1
+4,Sheraton,Cedar A,25,1
+5,Sheraton,Cedar B,25,1
+6,Sheraton,Diamond,0,1
+7,Sheraton,Grand A,40,1
+8,Sheraton,Grand B,100,1
+9,Sheraton,Greenwood,35,1
+10,Sheraton,Issaquah,50,1
+11,Sheraton,Jefferson,60,1
+12,Sheraton,Juniper,0,1
+13,Sheraton,Metropolitan A,350,1
+14,Sheraton,Metropolitan B,0,1
+15,Sheraton,Ravenna AB,70,1
+16,Sheraton,Ravenna C,40,1
+17,Sheraton,Redwood,125,1
+18,Sheraton,Willow A,80,1
+19,Sheraton,Willow B,75,1
+20,WSCC,201,100,1
+21,WSCC,203,60,1
+22,WSCC,204,100,1
+23,WSCC,205,75,1
+24,WSCC,211,85,1
+25,WSCC,212,55,1
+26,WSCC,213,60,1
+27,WSCC,214,55,1
+28,WSCC,303,80,1
+29,WSCC,401,110,1
+30,WSCC,603,80,1
+31,WSCC,604,80,1
+32,WSCC,606,100,1
+33,WSCC,607,135,1
+34,WSCC,608,0,1
+35,WSCC,609,0,1
+36,WSCC,611,100,1
+37,WSCC,612,100,1
+38,WSCC,613,60,1
+39,WSCC,614,50,1
+40,WSCC,615,75,1
+41,WSCC,616,75,1
+42,WSCC,617,65,1
+43,WSCC,618,60,1
+44,WSCC,619,75,1
+45,WSCC,620,80,1
+46,WSCC,2A,0,1
+47,WSCC,4C-1,100,1
+48,WSCC,4C-2,250,1
+49,WSCC,4C-3,200,1
+50,WSCC,4C-4,200,1
+51,WSCC,6A,400,1
+52,WSCC,6C,0,1
+53,WSCC,Chelan 2,140,1
+54,WSCC,Chelan 4,80,1
+55,WSCC,Chelan 5,65,1
+56,WSCC,Exhibit Hall - Booth 200 and 201,100,1
+57,WSCC,Exhibit Hall - Booths 413 and 414,100,1
+58,WSCC,Exhibit Hall - MLA Booth,100,1
+59,WSCC,Skagit 1,65,1
+60,WSCC,Skagit 2,120,1
+61,WSCC,Skagit 3,95,1
+62,WSCC,Skagit 4,125,1
+63,WSCC,Skagit 5,125,1
+64,WSCC,Tahoma 1,155,1
+65,WSCC,Tahoma 2,170,1
+66,WSCC,Yakima 1,200,1
+67,WSCC,Yakima 2,60,1

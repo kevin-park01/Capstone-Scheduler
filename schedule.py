@@ -1,15 +1,15 @@
 from dataclasses import dataclass, field
-import math
+from datetime import datetime
+import sys
 
-# Gloabl constants
-ROOM_START = 6      # Earliest time (military time) a room can open
-ROOM_END = 12       # Latest time (military time) a room can close
-INTERVAL = 30       # Time (minutes) of each schedule slot
-BUFFER = 30         # Buffer time (minutes) in between sessions
 
-# Global logs used for constraint checking  
-speaker_log = []    # Records which speakers will be speaking at indexes of all schedules
-topic_log = []      # Records what topics will be presented at indexes of all schedules
+# A speaker is someone who will be assigned to one or more sessions to present.
+@dataclass
+class Speaker:
+    speaker_id: int                 # Unique speaker identifer
+    first_name: str                 # First name of speaker
+    last_initial: str               # Last inital of speaker
+    session_ids: list[int]          # ID of session the speaker is assigned to
 
 
 # A session represents a meeting or event to be scheduled. Each session should have pre-determined 
@@ -17,15 +17,30 @@ topic_log = []      # Records what topics will be presented at indexes of all sc
 # without breaking constraints.
 @dataclass
 class Session:
-    session_id: int                  # Unique session identifier
-    duration: int                    # Time in minutes that a session lasts
-    est_capcity: int                 # Estimated number of attendees
-    title: str                       # Title of session
-    format: str                      # Format of session (e.g., roundtable)
-    topic: str                       # Topic of session (e.g., "African History")
-    equipment: list[str]             # List of equipment needed (e.g., WiFi)
-    speaker: list[int]               # List of speaker ID's
+    session_id: int                      # Unique session identifier
+    duration: int                        # Time in minutes that a session lasts
+    est_capcity: int                     # Estimated number of attendees
+    title: str                           # Title of session
+    format: str                          # Format of session (e.g., roundtable)
+    topic: str                           # Topic of session (e.g., "African History")
+    type: str                            # Type of the session (e.g., Social Event)
+    sponsors: list[str]                  # List of sponsors, including co-sponsors
+    equipment: list[str]                 # List of equipment needed (e.g., WiFi)
+    speaker: list[int]                   # List of speaker ID's
+    assigned_room: int = 0               # Room ID that the session is scheduled into
+    start_time: datetime = datetime(1, 1, 1)    # Time of day that session is scheduled to start
+    end_time: datetime = datetime(1, 1, 1)      # Time of day that session is scheduled to end
 
+
+    # Set session start and end time
+    def set_time(self, start: datetime, end: datetime, day: datetime):
+        self.start_time = datetime(day.year, day.month, day.day, start.hour, start.minute)
+        self.end_time = datetime(day.year, day.month, day.day, end.hour, end.minute)
+
+    
+    # Set scheduled room ID
+    def set_room(self, room_id: int):
+        self.assigned_room = room_id
 
 
 # A room is where sessions will be scheduled in. Each room will contain scheduled sessions
@@ -36,20 +51,26 @@ class Session:
 class Room:
     room_id: int                                                    # Unique room indentifier
     max_capacity: int                                               # Maximum number of people allowed
-    start_time: int                                                 # When the room opens in military time
-    end_time: int                                                   # When the rooms closes in military time
+    name: str                                                       # Name of the room
+    property: str                                                   # Property the room is located in
+    floor: int                                                      # Floor number the room is on
     format: str = ""                                                # Format of room (e.g., roundtable)
     equipment: list[str] = field(default_factory=list)              # List of equipment needed (e.g., WiFi)
     schedule: list[list[Session]] = field(default_factory=list)     # List of session lists that represent daily schedules
+    slots: int = 0                                                  # Number of slots in a schedule
 
 
     # Create a blank schedule with slots in between ROOM_START and ROOM_END 
-    def schedule_init(self): 
-        if self.start_time < ROOM_START or self.end_time > ROOM_END:
-            print(f'ERROR: Room cannot start before {ROOM_START} or end after {ROOM_END}')
-        
-        time_slots = math.ceil((60 * (ROOM_END - ROOM_START)) / INTERVAL)
-        self.schedule += [['_'] * time_slots]
+    def schedule_init(self, num_slots: int, start_times: list[datetime], end_times: list[datetime], day: datetime):   
+        empty_list = []
+
+        for slot_index in range(num_slots):
+            empty_slot = Session(-1, 0, 0, 'Emtpy', 'Empty', 'Empty', 'Empty', [], [], [])
+            empty_slot.set_time(start_times[slot_index], end_times[slot_index], day)
+            empty_list.append(empty_slot)
+
+        self.schedule += [empty_list]
+        self.slots = num_slots
 
 
     # Set the format of the room
@@ -60,16 +81,6 @@ class Room:
     # Add equipment to room
     def add_equipment(self, equipment: list[str]):
         self.equipment.extend(equipment)
-
-
-    # Get the index of when the room opens
-    def get_start_index(self) -> int:
-        return math.ceil(60 * (self.start_time - ROOM_START) / INTERVAL)
-
-
-    # Get the index of when the room closes
-    def get_end_index(self) -> int:
-        return math.ceil(60 * (self.end_time - ROOM_START) / INTERVAL)
 
 
     # Check if the session is compatible with this room
@@ -89,76 +100,55 @@ class Room:
         return True
 
 
-    # Insert session into the specified interval in the schedule 
-    def insert_session(self, session: Session, left_index: int, right_index: int, day: int):
-        for i in range(left_index, right_index):
-            self.schedule[day][i] = session.session_id
-
-
-    # Insert buffer into specified interval in the schedule
-    def insert_buffer(self, left_index: int, right_index: int, day: int):
-        for i in range(left_index, right_index):
-            self.schedule[day][i] = 'B'
-
-
     # Add the session to the specified day's schedule
-    def add_session(self, session: Session, day: int) -> bool:
+    def add_session(self, session: Session, day_index: int, day: datetime, slots: list[int], start_times: list[datetime], end_times: list[datetime], speaker_log, topic_log, sponsor_log) -> bool:
         # Check if the session and room are compatible
         if not self.check_compatible(session):
             return False
 
-        sched = self.schedule[day]
-        left_index = self.get_start_index()
-        buffer_slots = math.ceil(BUFFER / INTERVAL)
-        slots_needed = math.ceil(session.duration / INTERVAL) + buffer_slots
+        sched = self.schedule[day_index]
 
-        for i in range(self.get_start_index(), self.get_end_index()):
-            # Check if there is a speaker conflict
-            if set(speaker_log[day][i]).intersection(session.speaker):
-                left_index = i + 1
+        for i in slots:
+            is_valid = True
+            slot_duration = (end_times[i] - start_times[i]).total_seconds() / 60.0
+
+            if sched[i].session_id != -1:                                         # Check if the schedule at this index already has a session
+                continue
+            elif session.duration > slot_duration:                                # Check if session duration exceeds slot duration
+                continue
+            elif set(speaker_log[day_index][i]).intersection(session.speaker):    # Check if there is a speaker conflict
+                continue
+            elif session.topic in topic_log[day_index][i]:                        # Check if there is a topic conflict
+                continue
+            elif set(sponsor_log[day_index][i]).intersection(session.sponsors):   # Check if there is a sponsor conflict
                 continue
 
-            # Check if there is a topic conflict
-            if session.topic in topic_log[day][i]:
-                left_index = i + 1
-                continue
-
-            # Check if the schedule at this index already has a session or buffer
-            if sched[i] != '_':
-                left_index = i + 1
-                continue
-                
             # Insert the session if there is enough open space
-            if i - left_index == slots_needed:
-                self.insert_session(session, left_index, i - buffer_slots, day)
-                self.insert_buffer(i - buffer_slots, i, day) 
-                update_logs(session, left_index, i - buffer_slots, day)
-                return True
-            # Handle edge case where a session is scheduled at the end of a room's schedule
-            elif i + 1 == len(self.schedule[day]) and i - left_index + 1 == slots_needed:
-                self.insert_session(session, left_index, i + 1, day)
-                self.insert_buffer(i - buffer_slots + 1, i + 1, day) 
-                update_logs(session, left_index, i + 1, day)
-                return True
-            # Handle edge case where session can fit without a buffer at the end of a schedule
-            elif i + 1 == len(self.schedule[day]) and i - left_index + 1 == slots_needed - buffer_slots:
-                self.insert_session(session, left_index, i + 1, day) 
-                update_logs(session, left_index, i + 1, day)
-                return True
+            session.set_time(start_times[i], end_times[i], day)
+            session.set_room(self.room_id)
+            self.schedule[day_index][i] = session
+
+            # Update speaker and topic logs
+            speaker_log[day_index][i] = speaker_log[day_index][i] + session.speaker
+            topic_log[day_index][i] = topic_log[day_index][i] + [session.topic]
+            sponsor_log[day_index][i] = sponsor_log[day_index][i] + session.sponsors
+            return True
 
         return False
 
 
     # Print daily schedules for this room
-    def print_schedule(self):
+    def print_schedule(self, start_times: list[datetime], end_times: list[datetime], days: list[datetime]):
         print(f'Room {self.room_id} Schedule')
         print(f'   Equipment: {self.equipment}')
-        print(f'   Format: {self.format} \n')
-        for i in range(len(self.schedule)):
-            output = f'   Day {i}:  '
-            for session in self.schedule[i]:
-                output += str(session) + "  "
-            print(output)
+        print(f'   Format: {self.format}')
+        for i in range(len(days)):
+            print(f'\n   Day {days[i].date()}:')
+            for j in range(len(self.schedule[i])):
+                if(self.schedule[i][j].session_id == -1):
+                    print(f'   {start_times[j].time()} - {end_times[j].time()}:')
+                else:
+                    print(f'   {start_times[j].time()} - {end_times[j].time()}: {self.schedule[i][j].session_id}')
         print()
 
 
@@ -169,21 +159,249 @@ class Room:
 # it for another day.
 @dataclass
 class Schedule:
-    rooms_sched: dict[int, Room] = field(default_factory=dict)        # Maps room ID's to rooms
-    sessions_not_sched: list[Session] = field(default_factory=list)   # List of session not able to be scheduled
-    days_scheduled: int = 0                                           # Number of days scheduled
+    start_times: list[datetime]                                           # List of schedule interval start times
+    end_times: list[datetime]                                             # List of schedule interval end times
+    days: list[datetime]                                                  # List of all days
+    all_sessions: list[Session]                                           # List of all sessions
+    all_rooms: list[Room]                                                 # List of all rooms
+    speakers: list[Speaker]                                               # List of all speakers
+    days_scheduled: int = 0                                               # Number of days scheduled
+    rooms_sched: dict[int, Room] = field(default_factory=dict)            # Maps room ID's to rooms
+    sessions_scheduled: list[Session] = field(default_factory=list)       # List of scheduled sessions
+    sessions_not_scheduled: list[Session] = field(default_factory=list)   # List of session not able to be scheduled
+    speaker_log: list[list[list[str]]] = field(default_factory=list)      # List of speakers in each time slot for each day
+    topic_log: list[list[list[str]]] = field(default_factory=list)        # List of topics in each time slot for each day
+    sponsor_log: list[list[list[str]]] = field(default_factory=list)     # List of sponsors and cosponsors in each time slot for each day
+
+
+    # Create a blank log for speaker and topic logs
+    def logs_init(self):
+        self.topic_log += [[[]] * len(self.start_times)]
+        self.speaker_log += [[[]] * len(self.start_times)]
+        self.sponsor_log += [[[]] * len(self.start_times)]
+
+
+    def init(self):
+        for i in range(len(self.days)):
+            # Initialize logs
+            self.logs_init()
+
+            # Initalize room schedules
+            for room in self.all_rooms:
+                room.schedule_init(len(self.start_times), self.start_times, self.end_times, self.days[i])
+
+
+    # Print schedule
+    def print_schedule(self):
+        for room in self.rooms_sched.values():
+            room.print_schedule(self.start_times, self.end_times, self.days)
+        
+        if len(self.sessions_not_scheduled) > 0:
+            print('Could not schedule sessions:')
+            for sess in self.sessions_not_scheduled:
+                print(sess.session_id)
+
     
+    # Get speaker object given the speaker's ID
+    def get_speaker(self, id: int) -> Speaker:
+        for speaker in self.speakers:
+            if speaker.speaker_id == id:
+                return speaker
+        
+        return None
+
+
+    # Return scheduled sessions in a list
+    def get_scheduled_sessions(self) -> list[Session]:
+        return self.sessions_scheduled
+
+
+    # Return unscheduled sessions in a list
+    def get_unscheduled_sessions(self) -> list[Session]:
+        if len(self.sessions_scheduled) == 0:
+            return self.all_sessions
+
+        unscheduled = []
+        for sess in self.all_sessions:
+            unscheduled.append(sess)
+            for sched_sess in self.sessions_scheduled:
+                if sess.session_id == sched_sess.session_id:
+                    unscheduled.remove(sess)
+                    break
+
+        return unscheduled
+
+
+    # Return a set of session formats needed by sessions that haven't been schedule yet
+    def get_session_formats(self) -> set[str]:
+        formats = set()
+
+        for sess in self.get_unscheduled_sessions():
+            formats.add(sess.format)
+
+        return formats
+
+    
+    # Return a set of room formats from all rooms
+    def get_room_formats(self) -> set[str]:
+        formats = set()
+
+        for room in self.all_rooms:
+            formats.add(room.format)
+
+        return formats
+
+    
+    # Return a set of all equipment from all rooms
+    def get_room_equipment(self) -> set[str]:
+        equipment = set()
+
+        for room in self.all_rooms:
+            equipment.update(room.equipment)
+        
+        return equipment
+
+
+    # Return a set of all properties from all rooms
+    def get_room_properties(self) -> set[str]:
+        properties = set()
+
+        for room in self.all_rooms:
+            properties.add(room.property)
+
+        return properties
+
+
+    # Return a set of session topics
+    def get_session_topics(self) -> set[str]:
+        topics = set()
+
+        for sess in self.get_unscheduled_sessions():
+            topics.add(sess.topic)
+
+        return topics
+
+
+    # Return a set of session types
+    def get_session_types(self) -> set[str]:
+        types = set()
+
+        for sess in self.get_unscheduled_sessions():
+            types.add(sess.type)
+
+        return types
+
+
+    # Return a set of sponsors
+    def get_session_sponsors(self) -> set[str]:
+        sponsors = set()
+
+        for sess in self.get_unscheduled_sessions():
+            sponsors.update(sess.sponsors)
+
+        return sponsors
+
+
+    # Returns the max capcity of all rooms
+    def get_room_max_capacity(self) -> int:
+        max = 0
+
+        for room in self.all_rooms:
+            if room.max_capacity > max:
+                max = room.max_capacity
+        
+        return max
+
+
+    # Returns the smallest capcity of selected sessions
+    def get_session_min_capacity(self, selected_sessions: list[Session]) -> int:
+        min = sys.maxsize
+        
+        for session in selected_sessions:
+            if session.est_capcity < min:
+                min = session.est_capcity
+
+        return min
+
+
+    # Get index of slot in start_times list
+    def get_slot_index(self, time: datetime) -> int:
+        time_index = -1
+        
+        for i in range(len(self.start_times)):
+            if self.start_times[i].time() == time.time():
+                time_index = i
+        
+        return time_index
+
+
+    # Get index of days in days list
+    def get_day_index(self, day: datetime):
+        day_index = -1
+
+        for i in range(len(self.days)):
+            if self.days[i].date() == day.date():
+                day_index = i
+        
+        return day_index
+
+
+    # Get list of sessions that match filters
+    def get_filtered_sessions(self, types: list[str], formats: list[str], sponsors: list[str], topics: list[str]):
+        compatible_sessions = []
+        
+        for session in self.get_unscheduled_sessions():
+            if len(types) > 0 and session.type not in types:
+                continue
+            elif len(formats) > 0 and session.format not in formats:
+                continue
+            elif len(sponsors) > 0 and not set(session.sponsors).issubset(sponsors):
+                continue
+            elif len(topics) > 0 and session.topic not in topics:
+                continue
+
+            compatible_sessions.append(session)
+
+        return compatible_sessions
+
+
+    # Get list of rooms that match filters and the number of available slots of specified days and times
+    def get_filtered_room_availability(self, days: list[datetime], times: list[datetime], equipment: list[str], capacity: int, formats: list[str], selected_sessions: list[Session]) -> list[tuple()]:
+        compatible_rooms = []
+
+        min_capacity = self.get_session_min_capacity(selected_sessions)
+        
+        for room in self.all_rooms:
+            num_available = 0
+
+            for day in days:
+                day_index = self.get_day_index(day)
+
+                for time in times:
+                    slot_index = self.get_slot_index(time)
+
+                    if len(equipment) > 0 and not set(room.equipment).issubset(equipment):      # Check if this room's equipment is a subset of the filtered equipment
+                        continue
+                    elif room.max_capacity > capacity:                                          # Check if room's capacity exceeds the filtered capacity
+                        continue
+                    elif room.max_capacity < min_capacity:                                      # Check if room's capcity is less than the minimum capacity of selected sessions
+                        continue
+                    elif len(formats) > 0 and not room.format in formats:                       # Check if the room's format is in the list of filtered formats
+                        continue
+
+                    if room.schedule[day_index][slot_index].session_id == -1:
+                        num_available += 1
+
+            if num_available != 0:
+                compatible_rooms.append((room, num_available))
+
+        return compatible_rooms
+
 
     # Create a schedule for one day. Intended to be called once each day
-    def create_day_schedule(self, sessions: list[Session], rooms: list[Room], day: int) -> bool:
+    def create_day_schedule(self, sessions: list[Session], rooms: list[Room], day_index: int, day: datetime, slots: list[datetime]):
         self.days_scheduled += 1
-        
-        # Initialize logs
-        logs_init()
-
-        # Initalize room schedules
-        for room in rooms:
-            room.schedule_init()
+        self.sessions_not_scheduled = []
 
         # Loop through sessions
         for sess in sessions:
@@ -195,35 +413,27 @@ class Schedule:
                     room.set_format(sess.format)
                     self.rooms_sched[room.room_id] = room
 
-                if self.rooms_sched[room.room_id].add_session(sess, day):
+                if self.rooms_sched[room.room_id].add_session(sess, day_index, day, slots, self.start_times, self.end_times, self.speaker_log, self.topic_log, self.sponsor_log):
                     is_scheduled = True
+                    self.sessions_scheduled.append(sess)
                     break
             
             if not is_scheduled:
-                self.sessions_not_sched.append(sess)
-
-        if len(self.sessions_not_sched) > 0:
-            return False
-
-        return True
+                self.sessions_not_scheduled.append(sess)
 
 
-    # Print schedule
-    def print_schedule(self):
-        for room in self.rooms_sched.values():
-            room.print_schedule()
+    # Create multiple day schedules. Requires a list of indexes matching the selected indexes of the days list.
+    def create_schedule(self, sessions: list[Session], rooms: list[Room], days: list[datetime], times: list[datetime]):
+        session_list = sessions
+        slot_indexes = []
+        i = 0
 
+        for time in times:
+            slot_indexes.append(self.get_slot_index(time))
 
-# Create a blank log for speaker and topic logs
-def logs_init():
-    global topic_log
-    global speaker_log
-    topic_log += [[[]] * (math.ceil((60 * (ROOM_END - ROOM_START)) / INTERVAL) + 1)]
-    speaker_log += [[[]] * (math.ceil((60 * (ROOM_END - ROOM_START)) / INTERVAL) + 1)]
+        while i < len(days) and len(session_list) > 0:
+            day_index = self.get_day_index(days[i])
 
-
-# Update speaker and topic logs
-def update_logs(session: Session, left_index: int, right_index: int, day: int):
-    for i in range(left_index, right_index):
-        speaker_log[day][i] = speaker_log[day][i] + session.speaker
-        topic_log[day][i] = topic_log[day][i] + [session.topic]
+            self.create_day_schedule(session_list, rooms, day_index, days[i], slot_indexes)
+            session_list = self.sessions_not_scheduled
+            i += 1
