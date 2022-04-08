@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="ISO-8859-1">
+    <title>Step Two</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='Stylesheet.css') }}" />
+</head>
+
+<body>
+    <header>
+        <h1>Select Date</h1>
+    </header>
+
+    <nav class="crumbs">
+        <ul>
+            <li class="crumb"><a href="{{url_for('stepZero')}}">Step Zero</a></li>
+            <li class="crumb"><a href="{{url_for('stepOne')}}">Step One</a></li>
+            <li>Step Two</li>
+        </ul>
+    </nav>
+
+    <main>
+        <h3>Choose the Dates you would like to schedule sessions on:</h3>
+        <form method="post">
+            <!--  Dates  -->
+            <fieldset id="dates">                
+                <legend>Dates</legend>
+               {% for date in dates %}
+                    <ul>
+						<li>
+							<label>
+								<input type="checkbox" name="selectedDates" value="{{date}}" />
+								{{date.month}}/{{date.day}}/{{date.year}}
+							</label>
+						</li>
+					</ul>
+				{% endfor %}
+            </fieldset>
+
+            <!--  Times  -->
+            <fieldset id="times">
+                <legend>Times</legend>
+               {% for sTime in sTimes %}
+                    <ul>
+						<li>
+							<label>
+								<input type="checkbox" name="selectedTimes" value="{{sTime}}" />
+								{{sTime.strftime('%H:%M')}} - {{eTimes[loop.index0].strftime('%H:%M')}}
+							</label>
+						</li>
+					</ul>
+				{% endfor %}
+            </fieldset>
+            
+            <input class="btn" type="submit" value="Next" />
+        </form>
+    </main>
+
+</body>
+</html>
