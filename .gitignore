@@ -45,3 +45,11 @@
 .vscode
 .DS_store
 __pycache__
+/.vs/VSWorkspaceState.json
+/.vs/ProjectSettings.json
+/.vs/GitRepos/v17/Browse.VC.opendb
+/.vs/GitRepos/v17/Browse.VC.db-shm
+/.vs/GitRepos/v17/Browse.VC.db-wal
+/.vs/GitRepos/v17/Browse.VC.db
+/.vs/GitRepos/v17/.suo
+/.vs/GitRepos/config

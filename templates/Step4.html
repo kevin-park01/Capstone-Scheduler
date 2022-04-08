@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8" />
+    <title>Step Four</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='Stylesheet.css') }}" />
+
+</head>
+
+<body>
+    <header>
+        <h1>Step Four</h1>
+    </header>
+    <!-- Navigate to step1, step2, step3 -->
+    <nav class="crumbs">
+        <ul>
+            <li class="crumb"><a href="{{url_for('stepZero')}}">Step Zero</a></li>
+            <li class="crumb"><a href="{{url_for('stepOne')}}">Step One</a></li>
+            <li class="crumb"><a href="{{url_for('stepTwo')}}">Step Two</a></li>
+            <li class="crumb"><a href="{{url_for('stepThree')}}">Step Three</a></li>
+            <li>Step Four</li>
+        </ul>
+    </nav>
+
+
+    <main>
+        <!-- make generated schedule visible -->
+        <details>
+            <summary>View Schedule</summary>
+            <!-- TODO: display schedule -->
+        </details>
+
+       
+
+        <!-- Download generated schedule -->
+        <input id="Button1" type="button" value="Download" />
+
+        <!-- Save generated schedule -->
+        <input id="Button2" type="button" value="Save Changes" />
+
+    </main>
+
+
+</body>
+</html>

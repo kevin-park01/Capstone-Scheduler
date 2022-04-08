@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="ISO-8859-1">
+    <title>Step Three</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='Stylesheet.css') }}" />
+</head>
+
+<body>
+    <header>
+        <h1>Step Three</h1>
+    </header>
+
+    <nav class="crumbs">
+        <ul>
+            <li class="crumb"><a href="{{url_for('stepZero')}}">Step Zero</a></li>
+            <li class="crumb"><a href="{{url_for('stepOne')}}">Step One</a></li>
+            <li class="crumb"><a href="{{url_for('stepTwo')}}">Step Two</a></li>
+            <li>Step Three</li>
+        </ul>
+    </nav>
+
+
+    <main>
+        <h3>Choose the Rooms you would like to schedule sessions in: </h3>
+        <form id="x" method="post">
+                <!--  filters section -->
+                <section class="filters">
+                    <h3>Filters</h3>
+                    <fieldset id="property">
+                        <legend>Property</legend>
+                        {% for property in properties %}
+                    <ul>
+                        <li>
+                            <label>
+                                <input type="checkbox" name="selectedProperties" value="{{property}}"/>
+                                {{property}}
+                            </label>
+                        </li>
+                    </ul>
+                        {% endfor %}
+                    </fieldset>
+
+                    <fieldset id="capacity">
+                        <legend>Capacity</legend>
+                        <!-- TODO: confirm step and max value -->
+                        <input id="maxCap" type="number" name="maxCapacity" min="{{min}}" max="{{max}}" step="10"/>
+                    </fieldset>
+
+                    <fieldset id="roomSetup">
+                        <legend>Room Format</legend>
+                        {% for roomFormat in formats %}
+                    <ul>
+                        <li>
+                            <label>
+                                <input type="checkbox" name="selectedRoomFormats" value="{{roomFormat}}"/>
+                                {{roomFormat}}
+                            </label>
+                        </li>
+                    </ul>
+                        {% endfor %}
+                    </fieldset>
+
+                    <fieldset id="AVSetup">
+                        <legend>AV Setup</legend>
+                        {% for avSetup in avSetups %}
+                    <ul>
+                        <li>
+                            <label>
+                                <input type="checkbox" name="selectedAVSetups" value="{{avSetup}}"/>
+                                {{avSetup}}
+                            </label>
+                        </li>
+                    </ul>
+                        {% endfor %}
+                    </fieldset>
+                    <!-- button to apply filters? -->
+                </section>
+
+                <!-- available rooms section -->
+                <section class="main-container">
+                    <table>
+                        <caption>Available Rooms</caption>
+                        <colgroup>
+                            <col class="check"/>
+                            <col class="info" span="6"/>
+                        </colgroup>
+                        <thead>
+                            <tr>
+                                <td/>
+                                <th scope="col">Name</th>
+                                <th scope="col">Property</th>
+                                <th scope="col">Floor</th>
+                                <th scope="col">Capacity</th>
+                                <th scope="col">Room Setup</th>
+                                <th scope="col">Available Slots</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for room in availableRooms %}
+                        <tr>
+                            <td>
+                                <input type="checkbox" name="selectedRooms" value="{{room}}"/>
+                            </td>
+                            <td>{{room.name}}</td>
+                            <td>{{room.property}}</td>
+                            <td>{{room.floor}}</td>
+                            <td>{{room.max_capacity}}</td>
+                            <td>{{room.format}}</td>
+                            <td></td>
+                        </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </section>
+            
+        </form>
+        <input type="submit" form="x" value="Next" />
+    </main>
+
+</body>
+</html>

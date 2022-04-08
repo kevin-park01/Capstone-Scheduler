@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="ISO-8859-1">
+	<title>Upload Files</title>
+	<link rel="stylesheet" href="{{ url_for('static', filename='Stylesheet.css') }}" />
+</head>
+
+<body>
+	<header>
+		<h1>Upload Files</h1>
+	</header>
+
+	<nav class="crumbs">
+		<ul>
+			<li>Step Zero</li>
+		</ul>
+	</nav>
+
+	<main>
+		<h3>Choose the CSV files to use in scheduling:</h3>
+
+		<form action="{{url_for('stepOne')}}">
+			<ul class="inputFiles">
+				<li>
+					<label for="sessionsInput">Sessions:</label>
+					<input name="sessionsInput" id="sessionsInput" type="file" />
+				</li>
+				<li>
+					<label for="roomsInput">Rooms:</label>
+					<input name="roomsInput" id="roomsInput" type="file" />
+				</li>
+				<li>
+					<label for="timeInput">Times:</label>
+					<input name="timeInput" id="timesInput" type="file" />
+				</li>
+				<li>
+					<label for="datesInput">Dates:</label>
+					<input name="datesInput" id="datesInput" type="file" />
+				</li>
+				<li>
+					<label for="speakersInput">People:</label>
+					<input name="speakersInput" id="speakersInput" type="file" />
+				</li>
+			</ul>
+
+			<input type="submit" value="Next" id="toStep1Btn"/>
+		</form>
+	</main>
+
+</body>
+</html>

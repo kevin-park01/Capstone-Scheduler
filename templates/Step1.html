@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="ISO-8859-1">
+    <title>Step One</title>
+    <link rel="stylesheet" href="{{url_for('static', filename='Stylesheet.css')}}" />
+</head>
+
+<body>
+    <header>
+        <h1>Step One</h1>
+    </header>
+
+    <nav class="crumbs">
+        <ul>
+            <li class="crumb"><a href="{{url_for('stepZero')}}">Step Zero</a></li>
+            <li>Step One</li>
+        </ul>
+    </nav>
+
+
+    <main>
+        <h3>Choose the Sessions you would like to schedule: </h3>
+        <form id="f" method="post">
+            <!--  filters section -->
+            <section class="filters">
+                <h3>Filters</h3>
+                <fieldset id="sessFormat">
+                    <legend>Session Format</legend>
+                    {% for sessFormat in sessFormats %}
+                    <ul>
+                        <li>
+                            <label>
+                                <input type="checkbox" id="{{sessFormat}}" name="selectedSessFormats" value="{{sessFormat}}"/>
+                                {{sessFormat}}
+                            </label>
+                        </li>
+                    </ul>
+                    {% endfor %}
+                </fieldset>
+
+                <fieldset>
+                    <legend>Topic</legend>
+                    {% for topic in topics %}
+                    <ul>
+                        <li>
+                            <label>
+                                <input type="checkbox" id="{{topic}}" name="selectedTopics" value="{{topic}}"/>
+                                {{topic}}
+                            </label>
+                        </li>
+                    </ul>
+                    {% endfor %}
+                </fieldset>
+
+                <!-- TODO: Implement Program section -->
+                <fieldset>
+                    <legend>Program Type</legend>
+                    {% for type in types %}
+                    <ul>
+                        <li>
+                            <label>
+                                <input type="checkbox" id="{{type}}" name="selectedTypes" value="{{type}}"/>
+                                {{type}}
+                            </label>
+                        </li>
+                    </ul>
+                    {% endfor %}
+                </fieldset>
+
+
+
+                <!-- TODO: Sponsor & Co-Sponsor -->
+                <fieldset>
+                    <legend>Sponsor</legend>
+                    {% for sponsor in sponsors %}
+                    <ul>
+                        <li>
+                            <label>
+                                <input type="checkbox" id="{{sponsor}}" name="selectedSponsors" value="{{sponsor}}"/>
+                                {{sponsor}}
+                            </label>
+                        </li>
+                    </ul>
+                    {% endfor %}
+                </fieldset>
+            </section>
+
+
+            <!-- unscheduled sessions section -->
+            <section class="main-container">
+                <table>
+                    <caption>Unscheduled Sessions</caption>
+                    <thead>
+                        <tr>
+                            <td/>
+                            <th scope="col">Title</th>
+                            <th scope="col">Type</th>
+                            <th scope="col">Topic</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for sess in unscheduled_sessions %}
+                        <tr>
+                            <td>
+                                <input type="checkbox" name="selectedSessions" value="{{sess}}"/>
+                            </td>
+                            <td>{{sess.title}}</td>
+                            <td>{{sess.type}}</td>
+                            <td>{{sess.topic}}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </section>
+
+        </form>
+        <input class="btn" form="f" type="submit" value="Next" />
+
+    </main>
+
+</body>
+</html>
