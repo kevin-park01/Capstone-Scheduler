@@ -2,6 +2,7 @@
 This script runs the application using a development server.
 It contains the definition of routes and views for the application.
 """
+from re import search
 import schedule
 import parse
 from datetime import datetime
@@ -16,7 +17,7 @@ wsgi_app = app.wsgi_app
 # 2. Call functions to get lists for all start times, end times, days, sessions, rooms, speakers
 # 3. Create Schedule object
 # 4. Call 'init' function for object
-
+'''
 speakers = parse.parseSpeakers('speaker.csv')
 sessions = parse.parseSession('session.csv')
 rooms = parse.parseRooms('rooms.csv')
@@ -54,14 +55,14 @@ days = [datetime(year, month, 13), datetime(year, month, 14), datetime(year, mon
 
 day_schedule = schedule.Schedule(start_times, end_times, days, sessions, rooms, speakers)
 day_schedule.init()
-'''
+
 
 
 
 
 @app.route('/', methods = ['POST', 'GET'])
 def main():
-    return redirect(url_for('stepZero'))
+    return redirect(url_for('stepOne'))
  
 
 
@@ -79,7 +80,8 @@ def stepZero():
 
 
 
-
+# TODO: dynamically modify the list of unscheduled sessions displayed based on filter selections    
+# TODO: check to make sure at least one session was selected
 @app.route('/StepOne', methods = ['POST', 'GET'])
 def stepOne():
     """ Renders the Step1 page. 
@@ -89,14 +91,34 @@ def stepOne():
         session["selectedTopics"] = request.form.getlist('selectedTopics')
         session["selectedTypes"] = request.form.getlist('selectedTypes')
         session["selectedSponsors"] = request.form.getlist('selectedSponsors')
-        session["selectedSessions"] = request.form.getlist('selectedSessions')
+        
+        print(request.form.getlist('selectedSessions')) # list of the session_ids as str
+
+        '''
+            request.form.getlist() returns list of strings, not objects
+            * it looks like getlist() has an optional second parameter that takes a callable type
+              to convert the items to, but I have not figured that out yet... *
+              
+                So, this is my workaround, which takes the session_ids of the selected sessions
+            and finds the corresponding session objects.  It is not efficient or elegant.
+
+            In sum, I need to be able to get the list of selected objects (unscheduled sessions & available rooms)
+            from the HTML forms.  This appears to be an issue for Step1 and Step3.
+        '''
+
+        session["selectedSessions"] = list()
+        for i in request.form.getlist('selectedSessions'):
+            for sess in day_schedule.get_unscheduled_sessions():
+                if int(i) == sess.session_id:
+                    session["selectedSessions"].append(sess)
+       
 
         print("selected session formats:  ", session["selectedSessFormats"])
         print("selected session topics:  ", session["selectedTopics"])
         print("selected session types:  ", session["selectedTypes"])
         print("selected session sponsors:  ", session["selectedSponsors"])
         print("selected sessions:  ", session["selectedSessions"])
-        # TODO: check to make sure at least one session was selected
+        
         return redirect(url_for('stepTwo'))
 
     else:
@@ -117,13 +139,16 @@ def stepTwo():
     """ Renders the Step2 page. 
         For POST requests, stores the Step2 form data in the session and renders the Step3 page. """
     if request.method == 'POST':
-        session["selectedDates"] = request.form.getlist('selectedDates')
-        #session["selectedTimes"] = request.form.getlist('selectedTimes')     
-        temp = list()  
+        session["selectedDates"] = list()
+        session["selectedTimes"] = list()        
+
+        for d in request.form.getlist('selectedDates'):
+            session["selectedDates"].append(datetime.strptime(d, '%Y-%m-%d %H:%M:%S'))
+           
         for t in request.form.getlist('selectedTimes'):
-            temp.append(datetime.strptime(t, '%Y-%m-%d %H:%M:%S'))
-        session["selectedTimes"] = temp    
-        print("selected days:  ", session["selectedDays"])
+            session["selectedTimes"].append(datetime.strptime(t, '%Y-%m-%d %H:%M:%S'))
+
+        print("selected days:  ", session["selectedDates"])
         print("selected times:  ", session["selectedTimes"])     
         
         return redirect(url_for('stepThree'))
@@ -134,36 +159,45 @@ def stepTwo():
 
 
 
-    
+# TODO: dynamically modify the list of available rooms displayed based on filter selections    
 # TODO: add number of selected sessions & range of est. capacity for selected sessions
+# TODO: error handling for when no rooms are selected
 @app.route('/StepThree', methods = ['POST', 'GET'])
 def stepThree():
     """ Renders the Step3 page. 
         For POST requests, stores the Step2 form data in the session and renders the Step4 page. """
     if request.method == 'POST':        
         session["selectedProperties"] = request.form.getlist('selectedProperties')       
-        session["maxCapacity"] = request.form.get('maxCapacity')
+        session["maxCapacity"] = request.form.get('maxCapacity', type=int)
         session["selectedRoomFormats"] = request.form.getlist('selectedRoomFormats')
         session["selectedAVSetups"] = request.form.getlist('selectedAVSetups')
-        session["selectedRooms"] = request.form.getlist('selectedRooms')
+        session["selectedRooms"] = request.form.getlist('selectedRooms')    # ISSUE: must be Room object type, but str type (see Step1)
         
         print("selected propertiess:  ", session["selectedProperties"])       
         print("selected max capacity:  ", session["maxCapacity"])
         print("selected room formats:  ", session["selectedRoomFormats"])
         print("selected AV setups:  ", session["selectedAVSetups"])
         print("selected rooms:  ", session["selectedRooms"])
-        # TODO: error handling for when no rooms are selected
+        
         return redirect(url_for('stepFour'))
 
     else:        
         selected_sessions = session['selectedSessions']  
         minCapacity = day_schedule.get_session_min_capacity(selected_sessions)
         maxCapacity = day_schedule.get_room_max_capacity()
-        roomFormats = day_schedule.get_session_formats()    #.get_room_formats()
-        roomEquipment =  ['Mic', 'Wifi']                    #day_schedule.get_room_equipment()
-        roomProperties = day_schedule.get_room_properties()     
-        avbleRooms = day_schedule.get_filtered_room_availability(day_schedule.days, day_schedule.start_times, 
-                                                           roomEquipment, minCapacity, roomFormats, selected_sessions)
+        roomProperties = day_schedule.get_room_properties()
+
+
+        ''' ISSUE: rooms initially have no format/equipment, causing 
+            get_room_format() and get_room_equipment() to return empty lists
+            and get_filtered_room_availability() to fail
+        '''
+        roomFormats = day_schedule.get_session_formats()    #   .get_room_formats()
+        roomEquipment =  ['Mic', 'Wifi']                    #   day_schedule.get_room_equipment()
+        
+        
+        #avbleRooms = day_schedule.get_filtered_room_availability(day_schedule.days, day_schedule.start_times, 
+        #                                                   roomEquipment, minCapacity, roomFormats, selected_sessions)
                
         return render_template('Step3.html', properties=roomProperties, min=minCapacity, max=maxCapacity,
                               formats=roomFormats, avSetups=roomEquipment, availableRooms=rooms) 

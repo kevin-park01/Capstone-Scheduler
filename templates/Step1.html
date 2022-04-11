@@ -103,7 +103,7 @@
                         {% for sess in unscheduled_sessions %}
                         <tr>
                             <td>
-                                <input type="checkbox" name="selectedSessions" value="{{sess}}"/>
+                                <input type="checkbox" name="selectedSessions" value="{{sess.session_id}}"/>
                             </td>
                             <td>{{sess.title}}</td>
                             <td>{{sess.type}}</td>
