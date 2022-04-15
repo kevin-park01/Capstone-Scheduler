@@ -1,6 +1,14 @@
 from dataclasses import dataclass, field
 from datetime import datetime
+from operator import attrgetter
 import sys
+
+# Debug variables
+compatible_error = 0
+duration_error = 0
+speaker_error = 0
+topic_error = 0
+sponsor_error = 0
 
 
 # A speaker is someone who will be assigned to one or more sessions to present.
@@ -19,7 +27,7 @@ class Speaker:
 class Session:
     session_id: int                      # Unique session identifier
     duration: int                        # Time in minutes that a session lasts
-    est_capcity: int                     # Estimated number of attendees
+    est_capacity: int                     # Estimated number of attendees
     title: str                           # Title of session
     format: str                          # Format of session (e.g., roundtable)
     topic: str                           # Topic of session (e.g., "African History")
@@ -73,11 +81,6 @@ class Room:
         self.slots = num_slots
 
 
-    # Set the format of the room
-    def set_format(self, format: str):
-        self.format = format
-
-
     # Add equipment to room
     def add_equipment(self, equipment: list[str]):
         self.equipment.extend(equipment)
@@ -86,15 +89,11 @@ class Room:
     # Check if the session is compatible with this room
     def check_compatible(self, session: Session) -> bool:
         # Check if this room has the equipment needed by the session
-        if not set(session.equipment).issubset(self.equipment):
+        if session.equipment != [''] and self.equipment != [] and not set(session.equipment).issubset(self.equipment):
             return False
 
         # Check if the session's estimated capacity exceeds this room's maximum capacity
-        if session.est_capcity > self.max_capacity:
-            return False
-
-        # Check if the session's format matches the room's format
-        if session.format != self.format:
+        if session.est_capacity > self.max_capacity:
             return False
         
         return True
@@ -102,8 +101,15 @@ class Room:
 
     # Add the session to the specified day's schedule
     def add_session(self, session: Session, day_index: int, day: datetime, slots: list[int], start_times: list[datetime], end_times: list[datetime], speaker_log, topic_log, sponsor_log) -> bool:
+        global compatible_error
+        global duration_error
+        global speaker_error
+        global topic_error
+        global sponsor_error
+
         # Check if the session and room are compatible
         if not self.check_compatible(session):
+            compatible_error += 1
             return False
 
         sched = self.schedule[day_index]
@@ -115,18 +121,25 @@ class Room:
             if sched[i].session_id != -1:                                         # Check if the schedule at this index already has a session
                 continue
             elif session.duration > slot_duration:                                # Check if session duration exceeds slot duration
+                duration_error += 1
                 continue
             elif set(speaker_log[day_index][i]).intersection(session.speaker):    # Check if there is a speaker conflict
+                speaker_error += 1
                 continue
             elif session.topic in topic_log[day_index][i]:                        # Check if there is a topic conflict
+                topic_error +=1
                 continue
             elif set(sponsor_log[day_index][i]).intersection(session.sponsors):   # Check if there is a sponsor conflict
+                sponsor_error += 1
                 continue
 
             # Insert the session if there is enough open space
             session.set_time(start_times[i], end_times[i], day)
             session.set_room(self.room_id)
             self.schedule[day_index][i] = session
+            
+            if self.equipment == [] and session.equipment != ['']:
+                self.add_equipment(session.equipment)
 
             # Update speaker and topic logs
             speaker_log[day_index][i] = speaker_log[day_index][i] + session.speaker
@@ -192,14 +205,24 @@ class Schedule:
 
 
     # Print schedule
-    def print_schedule(self):
+    def print_schedule(self, DEBUG: bool):
         for room in self.rooms_sched.values():
             room.print_schedule(self.start_times, self.end_times, self.days)
         
-        if len(self.sessions_not_scheduled) > 0:
-            print('Could not schedule sessions:')
-            for sess in self.sessions_not_scheduled:
-                print(sess.session_id)
+        print(f'Successfully scheduled {len(self.sessions_scheduled)} out of {len(self.all_sessions)} sessions.')
+
+        if DEBUG:
+            global compatible_error
+            global duration_error
+            global speaker_error
+            global topic_error
+            global sponsor_error
+            
+            print(f'Compatible {compatible_error}')
+            print(f'Duration {duration_error}')
+            print(f'Speaker {speaker_error}')
+            print(f'Topic {topic_error}')
+            print(f'Sponsor {sponsor_error}')
 
     
     # Get speaker object given the speaker's ID
@@ -302,7 +325,7 @@ class Schedule:
         return sponsors
 
 
-    # Returns the max capcity of all rooms
+    # Returns the max capacity of all rooms
     def get_room_max_capacity(self) -> int:
         max = 0
 
@@ -313,13 +336,13 @@ class Schedule:
         return max
 
 
-    # Returns the smallest capcity of selected sessions
+    # Returns the smallest capacity of selected sessions
     def get_session_min_capacity(self, selected_sessions: list[Session]) -> int:
         min = sys.maxsize
         
         for session in selected_sessions:
-            if session.est_capcity < min:
-                min = session.est_capcity
+            if session.est_capacity < min:
+                min = session.est_capacity
 
         return min
 
@@ -384,7 +407,7 @@ class Schedule:
                         continue
                     elif room.max_capacity > capacity:                                          # Check if room's capacity exceeds the filtered capacity
                         continue
-                    elif room.max_capacity < min_capacity:                                      # Check if room's capcity is less than the minimum capacity of selected sessions
+                    elif room.max_capacity < min_capacity:                                      # Check if room's capacity is less than the minimum capacity of selected sessions
                         continue
                     elif len(formats) > 0 and not room.format in formats:                       # Check if the room's format is in the list of filtered formats
                         continue
@@ -403,14 +426,16 @@ class Schedule:
         self.days_scheduled += 1
         self.sessions_not_scheduled = []
 
+        # Sort sessions by equipment and length
+        sessions.sort(key=attrgetter('est_capacity'), reverse=True)
+        rooms.sort(key=attrgetter('max_capacity'), reverse=True)
+
         # Loop through sessions
         for sess in sessions:
             is_scheduled = False
 
             for room in rooms:
                 if room.room_id not in self.rooms_sched.keys():
-                    room.add_equipment(sess.equipment)
-                    room.set_format(sess.format)
                     self.rooms_sched[room.room_id] = room
 
                 if self.rooms_sched[room.room_id].add_session(sess, day_index, day, slots, self.start_times, self.end_times, self.speaker_log, self.topic_log, self.sponsor_log):
