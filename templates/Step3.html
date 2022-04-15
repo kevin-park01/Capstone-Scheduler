@@ -100,7 +100,7 @@
                             {% for room in availableRooms %}
                         <tr>
                             <td>
-                                <input type="checkbox" name="selectedRooms" value="{{room}}"/>
+                                <input type="checkbox" name="selectedRooms" value="{{room.room_id}}"/>
                             </td>
                             <td>{{room.name}}</td>
                             <td>{{room.property}}</td>
