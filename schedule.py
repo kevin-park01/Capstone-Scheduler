@@ -65,7 +65,7 @@ class Room:
         empty_list = []
 
         for slot_index in range(num_slots):
-            empty_slot = Session(-1, 0, 0, 'Emtpy', 'Empty', 'Empty', 'Empty', [], [], [])
+            empty_slot = Session(-1, 0, 0, 'Empty', 'Empty', 'Empty', 'Empty', [], [], [])
             empty_slot.set_time(start_times[slot_index], end_times[slot_index], day)
             empty_list.append(empty_slot)
 
