@@ -17,7 +17,7 @@ def generatedCSV(sessions):
 		temp_title = session.title
 		temp_format = session.format
 		temp_type = session.type
-		temp_capacity = session.est_capcity
+		temp_capacity = session.est_capacity
 		temp_topic= session.topic
 		temp_sponsor = session.sponsors
 		temp_start= session.start_time.time()
@@ -152,8 +152,8 @@ def parseSession(filename):
         temp_topic = row[5]
         temp_sponsor = [row[6]]
         temp_duration = int(row[8])
-        temp_equipment = []
-        temp_speaker = []
+        temp_equipment = [] #row[9].split(',')
+        temp_speaker = [] #row[10].split(',')
         tempSession = schedule.Session(temp_session_id, temp_duration, temp_estimated_capacity,
         temp_title, temp_format, temp_topic, temp_type, temp_sponsor, temp_equipment, temp_speaker)
         SessionList.append(tempSession)
