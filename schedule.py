@@ -3,13 +3,6 @@ from datetime import datetime
 from operator import attrgetter
 import sys
 
-# Debug variables
-compatible_error = 0
-duration_error = 0
-speaker_error = 0
-topic_error = 0
-sponsor_error = 0
-
 
 # A speaker is someone who will be assigned to one or more sessions to present.
 @dataclass
@@ -101,15 +94,8 @@ class Room:
 
     # Add the session to the specified day's schedule
     def add_session(self, session: Session, day_index: int, day: datetime, slots: list[int], start_times: list[datetime], end_times: list[datetime], speaker_log, topic_log, sponsor_log) -> bool:
-        global compatible_error
-        global duration_error
-        global speaker_error
-        global topic_error
-        global sponsor_error
-
         # Check if the session and room are compatible
         if not self.check_compatible(session):
-            compatible_error += 1
             return False
 
         sched = self.schedule[day_index]
@@ -121,16 +107,12 @@ class Room:
             if sched[i].session_id != -1:                                         # Check if the schedule at this index already has a session
                 continue
             elif session.duration > slot_duration:                                # Check if session duration exceeds slot duration
-                duration_error += 1
                 continue
             elif set(speaker_log[day_index][i]).intersection(session.speaker):    # Check if there is a speaker conflict
-                speaker_error += 1
                 continue
             elif session.topic in topic_log[day_index][i]:                        # Check if there is a topic conflict
-                topic_error +=1
                 continue
-            elif set(sponsor_log[day_index][i]).intersection(session.sponsors):   # Check if there is a sponsor conflict
-                sponsor_error += 1
+            elif session.sponsors != [''] and set(session.sponsors).intersection(sponsor_log[day_index][i]):   # Check if there is a sponsor conflict
                 continue
 
             # Insert the session if there is enough open space
@@ -205,24 +187,11 @@ class Schedule:
 
 
     # Print schedule
-    def print_schedule(self, DEBUG: bool):
+    def print_schedule(self):
         for room in self.rooms_sched.values():
             room.print_schedule(self.start_times, self.end_times, self.days)
         
         print(f'Successfully scheduled {len(self.sessions_scheduled)} out of {len(self.all_sessions)} sessions.')
-
-        if DEBUG:
-            global compatible_error
-            global duration_error
-            global speaker_error
-            global topic_error
-            global sponsor_error
-            
-            print(f'Compatible {compatible_error}')
-            print(f'Duration {duration_error}')
-            print(f'Speaker {speaker_error}')
-            print(f'Topic {topic_error}')
-            print(f'Sponsor {sponsor_error}')
 
     
     # Get speaker object given the speaker's ID
@@ -425,10 +394,6 @@ class Schedule:
     def create_day_schedule(self, sessions: list[Session], rooms: list[Room], day_index: int, day: datetime, slots: list[datetime]):
         self.days_scheduled += 1
         self.sessions_not_scheduled = []
-
-        # Sort sessions by equipment and length
-        sessions.sort(key=attrgetter('est_capacity'), reverse=True)
-        rooms.sort(key=attrgetter('max_capacity'), reverse=True)
 
         # Loop through sessions
         for sess in sessions:
