@@ -314,9 +314,9 @@ class Schedule:
 
 
     # Returns the smallest capcity of selected sessions
-    def get_session_min_capacity(self, selected_sessions: list[Session]) -> int:
+    def get_session_min_capacity(self, selected_sessions: list[Session]) -> int:      
         min = sys.maxsize
-        
+
         for session in selected_sessions:
             if session.est_capcity < min:
                 min = session.est_capcity
@@ -366,10 +366,10 @@ class Schedule:
 
 
     # Get list of rooms that match filters and the number of available slots of specified days and times
-    def get_filtered_room_availability(self, days: list[datetime], times: list[datetime], equipment: list[str], capacity: int, formats: list[str], selected_sessions: list[Session]) -> list[tuple()]:
+    def get_filtered_room_availability(self, days: list[datetime], times: list[datetime], properties: list[str], equipment: list[str], capacity: int, formats: list[str], selected_sessions: list[Session]) -> list[tuple()]:
         compatible_rooms = []
-
         min_capacity = self.get_session_min_capacity(selected_sessions)
+       
         
         for room in self.all_rooms:
             num_available = 0
@@ -382,11 +382,13 @@ class Schedule:
 
                     if len(equipment) > 0 and not set(room.equipment).issubset(equipment):      # Check if this room's equipment is a subset of the filtered equipment
                         continue
-                    elif room.max_capacity > capacity:                                          # Check if room's capacity exceeds the filtered capacity
+                    elif not capacity == None and room.max_capacity > capacity:                 # Check if room's capacity exceeds the filtered capacity
                         continue
                     elif room.max_capacity < min_capacity:                                      # Check if room's capcity is less than the minimum capacity of selected sessions
                         continue
                     elif len(formats) > 0 and not room.format in formats:                       # Check if the room's format is in the list of filtered formats
+                        continue
+                    elif len(properties) > 0 and not room.property in properties:
                         continue
 
                     if room.schedule[day_index][slot_index].session_id == -1:

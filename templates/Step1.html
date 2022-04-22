@@ -18,21 +18,20 @@
         </ul>
     </nav>
 
-
     <main>
         <h3>Choose the Sessions you would like to schedule: </h3>
-        <form id="f" method="post">
-            <!--  filters section -->
-             <input class="btn" form="f" type="submit" value="Next" />
-            <section class="filters">
+		<input form="x" type="submit" name="nextStep" value="Next" />
+        <form id="x" method="post">
+            <!--  filters section -->           
+            <section class="filters">              
                 <h3>Filters</h3>
                 <fieldset id="sessFormat">
                     <legend>Session Format</legend>
-                    {% for sessFormat in sessFormats %}
+                    {% for sessFormat, chk in sessFormats.items() %}
                     <ul>
                         <li>
                             <label>
-                                <input type="checkbox" id="{{sessFormat}}" name="selectedSessFormats" value="{{sessFormat}}"/>
+                                <input type="checkbox" id="{{sessFormat}}" name="selectedSessFormats" value="{{sessFormat}}" {{chk}}/>
                                 {{sessFormat}}
                             </label>
                         </li>
@@ -42,49 +41,46 @@
 
                 <fieldset>
                     <legend>Topic</legend>
-                    {% for topic in topics %}
+                    {% for topic, chk in topics.items() %}
                     <ul>
                         <li>
                             <label>
-                                <input type="checkbox" id="{{topic}}" name="selectedTopics" value="{{topic}}"/>
+                                <input type="checkbox" id="{{topic}}" name="selectedTopics" value="{{topic}}" {{chk}}/>
                                 {{topic}}
                             </label>
                         </li>
                     </ul>
                     {% endfor %}
                 </fieldset>
-
-                <!-- TODO: Implement Program section -->
+              
                 <fieldset>
                     <legend>Program Type</legend>
-                    {% for type in types %}
+                    {% for type, chk in types.items() %}
                     <ul>
                         <li>
                             <label>
-                                <input type="checkbox" id="{{type}}" name="selectedTypes" value="{{type}}"/>
+                                <input type="checkbox" id="{{type}}" name="selectedTypes" value="{{type}}" {{chk}}/>
                                 {{type}}
                             </label>
                         </li>
                     </ul>
                     {% endfor %}
                 </fieldset>
-
-
-
-                <!-- TODO: Sponsor & Co-Sponsor -->
+              
                 <fieldset>
                     <legend>Sponsor</legend>
-                    {% for sponsor in sponsors %}
+                    {% for sponsor, chk in sponsors.items() %}
                     <ul>
                         <li>
                             <label>
-                                <input type="checkbox" id="{{sponsor}}" name="selectedSponsors" value="{{sponsor}}"/>
+                                <input type="checkbox" id="{{sponsor}}" name="selectedSponsors" value="{{sponsor}}" {{chk}}/>
                                 {{sponsor}}
                             </label>
                         </li>
                     </ul>
                     {% endfor %}
-                </fieldset>
+                </fieldset>       
+				<input type="submit" name="applyFilters" value="Apply" />
             </section>
 
 
@@ -114,9 +110,8 @@
                     </tbody>
                 </table>
             </section>
-
-        </form>
-       
+			
+        </form>     
 
     </main>
 

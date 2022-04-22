@@ -3,6 +3,7 @@ This script runs the application using a development server.
 It contains the definition of routes and views for the application.
 """
 from re import search
+from typing import Tuple
 import schedule
 import parse
 from datetime import datetime
@@ -12,23 +13,9 @@ app = Flask(__name__)
 app.secret_key = "secret"
 wsgi_app = app.wsgi_app     
 
-
-# 1. Include Parsing Here
-# 2. Call functions to get lists for all start times, end times, days, sessions, rooms, speakers
-# 3. Create Schedule object
-# 4. Call 'init' function for object
 '''
-speakers = parse.parseSpeakers('speaker.csv')
-sessions = parse.parseSession('session.csv')
-rooms = parse.parseRooms('rooms.csv')
-days = parse.parseDays('Date.csv')
-start_times, end_times = parse.parseTime('time.csv')
-day_schedule = schedule.Schedule(start_times, end_times, days, sessions, rooms, speakers)
-day_schedule.init()
-
-'''
-room1 = schedule.Room(1, 150, 'Room 1', 'WSCC', 1)
-room2 = schedule.Room(2, 50, 'Room 2', 'BYENG', 2)
+room1 = schedule.Room(1, 150, 'Room 1', 'WSCC', 1, 'Rountable')
+room2 = schedule.Room(2, 50, 'Room 2', 'BYENG', 2, 'Theatre')
 
 session1 = schedule.Session(1, 75, 10, 'Intro to CS 1', 'Roundtable', 'CS', 'Social Event', ['ASU'],['Mic'], [1])
 session2 = schedule.Session(2, 75, 100, 'Intro to CS 2', 'Lecture', 'CS', 'Special Session', ['ASU'], ['Mic', 'Wifi'], [1])
@@ -55,65 +42,135 @@ day_schedule.init()
 
 selectedSessions = list[schedule.Session]()
 selectedRooms = list[schedule.Room]()
+'''
 
+speakers = None
+sessions = None
+rooms = None
+days = None
+start_times= None
+end_times = None
+day_schedule = None
+selectedSessions = None
+selectedRooms = None
+
+
+def makeChecked(all: list[str], selected: list[str]) -> dict[(str, str)]:
+    """Forms a dict that is used to maintain the 'checked' state of a HTML checkbox."""
+
+    checked = dict.fromkeys(all, "")
+
+    for k, v in checked.items():
+        if k in selected:
+            checked[k] = "checked"
+            
+    return checked
+    
 
 
 @app.route('/', methods = ['POST', 'GET'])
 def main():
-    return redirect(url_for('stepOne'))
+    """Defines the entry point of the application."""
+    return redirect(url_for('stepZero'))
  
 
 
 @app.route('/StepZero', methods = ['POST', 'GET'])
 def stepZero():
-    """ Renders the Step0 page. 
-        For POST requests, stores the Step0 form data in the session and renders the Step1 page. """
+    """ Renders the Step0 page.
+    For POST requests, stores the Step0 form data in the session and renders the Step1 page. """
+
     if request.method == 'POST':
-        # TODO: store input files on server
-        # TODO: ensure all needed input files have been entered
+        global day_schedule
+        global selectedRooms
+        global selectedSessions
+        global start_times
+        global end_times
+        global speakers 
+        global days
+
+        d = request.form['datesInput']
+        days = parse.parseDays(d)
+
+        s = request.form['speakersInput']  
+        speakers = parse.parseSpeakers(s)
+         
+        t = request.form['timeInput']
+        start_times, end_times = parse.parseTime(t)
+
+        r = request.form['roomsInput']
+        rooms = parse.parseRooms(r)
+
+        s1 = request.form['sessionsInput']
+        sessions = parse.parseSession(s1)
+        
+        day_schedule = schedule.Schedule(start_times, end_times, days, sessions, rooms, speakers)
+        day_schedule.init()
+
+        selectedSessions = list[schedule.Session]()
+        selectedRooms = list[schedule.Room]()
+
         return redirect(url_for('stepOne'))
 
     else:
         return render_template('Step0.html')
 
+    
 
-
-# TODO: dynamically modify the list of unscheduled sessions displayed based on filter selections    
-#       https://stackoverflow.com/questions/19794695/flask-python-buttons
 @app.route('/StepOne', methods = ['POST', 'GET'])
-def stepOne():
-    """ Renders the Step1 page. 
-        For POST requests, stores the Step1 form data in the session and renders the Step2 page. """
+def stepOne():       
+    """Render the 'Step 1' page or redirect to the 'Step 2' page."""
+
+    # The user has submitted form data.
+    # Reload Step 1 to update the page in response to user selections (apply the selected filters )
+    # or navigate to Step 2.
     if request.method == 'POST':
+        # Store the checked filter fields in the session state as lists of strings
         session['selectedSessFormats'] = request.form.getlist('selectedSessFormats')
         session['selectedTopics'] = request.form.getlist('selectedTopics')
         session['selectedTypes'] = request.form.getlist('selectedTypes')
         session['selectedSponsors'] = request.form.getlist('selectedSponsors')
-        
-        # get the session objects corresponding to the selected sessions 
-        for i in request.form.getlist('selectedSessions', type=int):
-            for sess in day_schedule.get_unscheduled_sessions():
-                if i == sess.session_id:
-                    selectedSessions.append(sess)
-       
+  
+        # Reloading the page to display the filtered sessions and checked fields
+        if 'applyFilters' in request.form:         
+            unscheduledSessions = day_schedule.get_filtered_sessions(session["selectedTypes"], 
+                                                                     session["selectedSessFormats"], 
+                                                                     session['selectedSponsors'], 
+                                                                     session['selectedTopics'])
+            
+            # store the form data as dicts that store checkbox states 
+            sessionFormats = makeChecked(list(day_schedule.get_session_formats()), session['selectedSessFormats'])
+            sessionTopics = makeChecked(list(day_schedule.get_session_topics()), session['selectedTopics'])
+            sessionTypes = makeChecked(list(day_schedule.get_session_types()), session['selectedTypes'])
+            sessionSponsors = makeChecked(list(day_schedule.get_session_sponsors()), session['selectedSponsors'])
 
-        #print("selected session formats:  ", session["selectedSessFormats"])
-        #print("selected session topics:  ", session["selectedTopics"])
-        #print("selected session types:  ", session["selectedTypes"])
-        #print("selected session sponsors:  ", session["selectedSponsors"])
-        print("selected sessions:  ", selectedSessions)
-        
-        return redirect(url_for('stepTwo'))
+            return render_template('Step1.html', unscheduled_sessions=unscheduledSessions, sessFormats=sessionFormats, 
+                                                 topics=sessionTopics, types=sessionTypes, sponsors=sessionSponsors)
 
-    else:
+
+        # Navigating to the next page (Step 2).
+        elif 'nextStep' in request.form:        
+            # get the session objects corresponding to the selected sessions 
+            selectedSessions.clear()
+            for i in request.form.getlist('selectedSessions', type=int):
+                for sess in day_schedule.get_unscheduled_sessions():
+                    if i == sess.session_id:
+                        selectedSessions.append(sess)
+            
+            return redirect(url_for('stepTwo'))
+        
+    # Render the 'Step 1' page
+    # This should occur when the page is first loaded and no selections have been made by the user. 
+    else:    
+        # store the form data as dicts that store checkbox states 
         unscheduledSessions = day_schedule.get_unscheduled_sessions()
-        sessionFormats = day_schedule.get_session_formats()
-        sessionTopics = day_schedule.get_session_topics()
-        sessionTypes = day_schedule.get_session_types()
-        sessionSponsors = day_schedule.get_session_sponsors()
-
+        sessionFormats = dict.fromkeys(list(day_schedule.get_session_formats()), "")
+        sessionTopics = dict.fromkeys(list(day_schedule.get_session_topics()), "")
+        sessionTypes = dict.fromkeys(list(day_schedule.get_session_types()), "")
+        sessionSponsors = dict.fromkeys(list(day_schedule.get_session_sponsors()), "")
+        
         return render_template('Step1.html', unscheduled_sessions=unscheduledSessions, sessFormats=sessionFormats, 
-                                                   topics=sessionTopics, types=sessionTypes, sponsors=sessionSponsors)
+                                             topics=sessionTopics, types=sessionTypes, sponsors=sessionSponsors)
 
 
 
@@ -121,73 +178,97 @@ def stepOne():
 @app.route('/StepTwo', methods = ['POST', 'GET'])
 def stepTwo():
     """ Renders the Step2 page. 
-        For POST requests, stores the Step2 form data in the session and renders the Step3 page. """
+    For POST requests, stores the Step2 form data in the session and renders the Step3 page. """
+
+    # Dates and times have been selected, navigating to Step 3
     if request.method == 'POST':
-        session["selectedDates"] = list()
-        session["selectedTimes"] = list()        
+        # convert the selected dates and times to datetime objects & store in session state
+        session["selectedDates"] = [datetime.strptime(date, '%Y-%m-%d %H:%M:%S') for date in request.form.getlist('selectedDates')]
+        session["selectedTimes"] = [datetime.strptime(time, '%Y-%m-%d %H:%M:%S') for time in request.form.getlist('selectedTimes')]       
 
-        for d in request.form.getlist('selectedDates'):
-            session["selectedDates"].append(datetime.strptime(d, '%Y-%m-%d %H:%M:%S'))
-           
-        for t in request.form.getlist('selectedTimes'):
-            session["selectedTimes"].append(datetime.strptime(t, '%Y-%m-%d %H:%M:%S'))
-
-        print("selected days:  ", session["selectedDates"])
-        print("selected times:  ", session["selectedTimes"])     
-        
         return redirect(url_for('stepThree'))
 
+    # The page is loaded, no user selections have been made yet
     else:        
-        return render_template('Step2.html', dates=day_schedule.days, 
-                               sTimes=day_schedule.start_times, eTimes=day_schedule.end_times)  
+        return render_template('Step2.html', dates=day_schedule.days, sTimes=day_schedule.start_times, eTimes=day_schedule.end_times)  
 
 
 
-# TODO: dynamically modify the list of available rooms displayed based on filter selections    
-# TODO: add number of selected sessions & range of est. capacity for selected sessions
+
 @app.route('/StepThree', methods = ['POST', 'GET'])
 def stepThree():
-    """ Renders the Step3 page. 
-        For POST requests, stores the Step3 form data in the session and renders the Step4 page. """
-    if request.method == 'POST':        
+    """Renders the 'Step 1' page or redirect to the 'Step 2' page."""
+
+    # The user has submitted form data.
+    # Reload Step 3 to update the page in response to user selections (apply the selected filters)
+    # or navigate to Step 4.
+    if request.method == 'POST':      
+        # Store the checked filter fields in the session state
         session["selectedProperties"] = request.form.getlist('selectedProperties')       
         session["maxCapacity"] = request.form.get('maxCapacity', type=int)
         session["selectedRoomFormats"] = request.form.getlist('selectedRoomFormats')
         session["selectedAVSetups"] = request.form.getlist('selectedAVSetups')
        
-        # get the room objects corresponding to the selected rooms    
-        for i in request.form.getlist('selectedRooms', type=int):
-            for room in day_schedule.all_rooms:
-                if i == room.room_id:
-                    selectedRooms.append(room)
-  
-        #print("selected propertiess:  ", session["selectedProperties"])       
-        #print("selected max capacity:  ", session["maxCapacity"])
-        #print("selected room formats:  ", session["selectedRoomFormats"])
-        #print("selected AV setups:  ", session["selectedAVSetups"])
-        print("selected rooms:  ", selectedRooms)
+        # Reloading the page to display the filtered rooms and checked fields
+        if 'applyFilters' in request.form:   
+            # the dates & times used for scheduling are set to all dates & times if unselected
+            selectedDates =  session['selectedDates'] if not session.get('selectedDates') == None else day_schedule.days
+            selectedTimes = session['selectedTimes'] if not session.get('selectedDates') == None else day_schedule.start_times
         
-        return redirect(url_for('stepFour'))
+            minCapacity = day_schedule.get_session_min_capacity(selectedSessions)            
+            maxCapacity = session["maxCapacity"] if not session.get('maxCapacity') == None else day_schedule.get_room_max_capacity()                
+    
+            # store the form data as dicts that store checkbox states 
+            roomProperties = makeChecked(list(day_schedule.get_room_properties()), session["selectedProperties"])
+            roomFormats = makeChecked(list(day_schedule.get_room_formats()), session["selectedRoomFormats"])          
+            roomEquipment = makeChecked(list(day_schedule.get_room_equipment()), session["selectedAVSetups"])         
 
+            # get the available rooms based on the room filters, sessions, dates & times selected
+            avbleRooms = day_schedule.get_filtered_room_availability(selectedDates, selectedTimes, 
+                                                                     session["selectedProperties"],
+                                                                     session["selectedAVSetups"], 
+                                                                     maxCapacity, 
+                                                                     session["selectedRoomFormats"], 
+                                                                     selectedSessions)         
+
+            return render_template('Step3.html', properties=roomProperties, min=minCapacity, max=maxCapacity,
+                                                 formats=roomFormats, avSetups=roomEquipment, availableRooms=avbleRooms) 
+            
+        # Navigating to the next page (Step 4).
+        elif 'nextStep' in request.form:                  
+            # get the room objects corresponding to the selected rooms   
+            selectedRooms.clear() 
+            for i in request.form.getlist('selectedRooms', type=int):
+                for room in day_schedule.all_rooms:
+                    if i == room.room_id:
+                        selectedRooms.append(room)
+                          
+            return redirect(url_for('stepFour'))
+
+    # Render the 'Step 3' page.
+    # This should occur when the page is first loaded and no selections have been made by the user. 
     else:        
+        selectedDates =  session['selectedDates'] if not session.get('selectedDates') == None else day_schedule.days
+        selectedTimes = session['selectedTimes'] if not session.get('selectedTimes') == None else day_schedule.start_times
+
         minCapacity = day_schedule.get_session_min_capacity(selectedSessions)
         maxCapacity = day_schedule.get_room_max_capacity()
-        roomProperties = day_schedule.get_room_properties()
 
-        
-        ''' ISSUE: rooms initially have no format/equipment, causing 
-            get_room_format() and get_room_equipment() to return empty lists
-            and get_filtered_room_availability() to fail
-        '''
-        roomFormats = day_schedule.get_session_formats()    #   .get_room_formats()
-        roomEquipment =  ['Mic', 'Wifi']                    #   day_schedule.get_room_equipment()
-        
-        
-        #avbleRooms = day_schedule.get_filtered_room_availability(day_schedule.days, day_schedule.start_times, 
-        #                                                   roomEquipment, minCapacity, roomFormats, selected_sessions)
+        # store the form data as dicts that store checkbox states 
+        roomProperties = dict.fromkeys(list(day_schedule.get_room_properties()), '')
+        roomFormats = dict.fromkeys(list(day_schedule.get_room_formats()), '')
+        roomEquipment =  dict.fromkeys(list(day_schedule.get_room_equipment()), '')   
+       
+        # get the available rooms based on the room filters, sessions, dates & times selected
+        avbleRooms = day_schedule.get_filtered_room_availability(selectedDates, selectedTimes, 
+                                                                 day_schedule.get_room_properties(), 
+                                                                 day_schedule.get_room_equipment() , 
+                                                                 maxCapacity, 
+                                                                 day_schedule.get_room_formats(), 
+                                                                 selectedSessions)
                
         return render_template('Step3.html', properties=roomProperties, min=minCapacity, max=maxCapacity,
-                              formats=roomFormats, avSetups=roomEquipment, availableRooms=rooms) 
+                                             formats=roomFormats, avSetups=roomEquipment, availableRooms=avbleRooms) 
         
         
 
@@ -196,12 +277,15 @@ def stepThree():
 @app.route('/StepFour', methods = ['POST', 'GET'])
 def stepFour():
     """ Renders the Step4 page. """
-    if request.method == 'POST':
-        # TODO: store generated schedule on server 
-        return render_template('Step4.html')
+    if request.method == 'POST':    
+        # Save the generated schedule as a CSV file   
+      
+        return render_template('Step4.html', schedule=day_schedule.get_scheduled_sessions()) 
+
     else:
         day_schedule.create_schedule(selectedSessions, selectedRooms, 
                                     session["selectedDates"], session["selectedTimes"])
+
         return render_template('Step4.html', schedule=day_schedule.get_scheduled_sessions()) 
 
 

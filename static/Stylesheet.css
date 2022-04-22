@@ -1,90 +1,97 @@
 
 body {
-    font-family: Helvetica, Verdana, sans-serif;
-   vertical-align: middle;
+	font-family: Helvetica, Verdana, sans-serif;
+	vertical-align: middle;
 }
 
 main {
-     margin: 20px 0 0 20px;
+	margin: 20px 0 0 20px;
+	display: inline;
 }
 
 h3 {
-    font-style: oblique;
+	font-style: oblique;
 }
 
 ul {
-    list-style-type: none;
+	list-style-type: none;
 }
 
-form {   
-    text-align: center;
-    display: inline-flex;
-    justify-content: space-between; 
-}
-
-.btn {
-    display:block;
+form {
+	text-align: center;
+	display: inline-flex;
+	justify-content: space-between;
 }
 
 .filters {
-    border: solid 1px black;
-    padding: 20px 40px 40px 10px; 
+	
+	border: solid 1px black;
+	padding: 20px 40px 40px 10px;
+	overflow: auto;
 }
 
 fieldset {
-    border: none;
-    text-align: left;
-    margin-top: 20px;
+	max-height: 250px;
+	overflow: auto;
+	border: none;
+	text-align: left;
+	margin-top: 20px;
 }
 
-    fieldset legend {
-        font-weight: bold;
-    }
+	fieldset legend {
+		font-weight: bold;
+	}
 
 .main-container {
-    padding: 20px 30px 10px 40px;
-    border: solid 1px black;
+	padding: 20px 30px 10px 40px;
+	border: solid 1px black;
+	overflow: auto;
 }
 
 table {
-    border-collapse: separate;
-    border-spacing: 20px;
+	text-align: left;
+	border-collapse: separate;
+	border-spacing: 20px;
+	max-height:1500px;
+	display: block;
+	overflow: auto;
 }
 
-    table > caption {
-        font-weight: bold;
-    }
+	table > caption {
+		font-weight: bold;
+		text-align: center;
+	}
 
 
 #capacity input {
-    width: 40px;
-    text-align: left;
+	width: 40px;
+	text-align: left;
 }
 
 
 nav {
-    border-bottom: 1px solid black;
+	border-bottom: 1px solid black;
 }
 
 .crumbs ul {
-    list-style-type: none;
-    padding-left: 0;
-    display: flex;
+	list-style-type: none;
+	padding-left: 0;
+	display: flex;
 }
 
 .crumb {
-    display: inline-block;
+	display: inline-block;
 }
 
-    .crumb a::after {
-        display: inline-block;
-        color: #000;
-        content: '>';
-        font-size: 80%;
-        font-weight: bold;
-        padding: 0 3px;
-    }
+	.crumb a::after {
+		display: inline-block;
+		color: #000;
+		content: '>';
+		font-size: 80%;
+		font-weight: bold;
+		padding: 0 3px;
+	}
 
-   .inputFiles {
-       list-style-type: none;
-   }
+.inputFiles {
+	list-style-type: none;
+}

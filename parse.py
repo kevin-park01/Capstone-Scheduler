@@ -32,7 +32,7 @@ def generatedCSV(sessions):
 		
 		rows.append(row)
 
-	with open('SCHEDULEOUTPUT.csv', 'w') as f:
+	with open('SCHEDULEOUTPUT.csv', 'w', encoding='utf8') as f:
 		write = csv.writer(f)
 		write.writerow(fields)
 		write.writerows(rows)

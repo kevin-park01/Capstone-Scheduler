@@ -25,35 +25,33 @@
 
 
     <main>
-        <!-- make generated schedule visible -->
         <details>
             <summary>View Schedule</summary>
-            <!-- TODO: display schedule -->
 			<table>
 				<tr>
-					<th>Session ID</th>
-					<th>Time Slot</th>
-					<th>Room ID</th>
-					<th>Date</th>
+                    <th>Date</th>
+                    <th>Time Slot</th>
+					<th>Session ID</th>				
+					<th>Room ID</th>					
 				</tr>
 				{% for session in schedule %}
                 <tr>
-					<td>{{ session.session_id }}</td>
-					<td>{{ session.start_time.time() }} - {{ session.end_time.time() }}</td>
-					<td>{{ session.assigned_room }}</td>
-					<td>{{ session.start_time.month }}/{{ session.start_time.day }}</td>
+                    <td>{{ session.start_time.month }}/{{ session.start_time.day }}</td>
+                    <td>{{ session.start_time.time() }} - {{ session.end_time.time() }}</td>
+					<td>{{ session.session_id }}</td>					
+					<td>{{ session.assigned_room }}</td>					
 				</tr>
 				{% endfor %}
 			</table>
         </details>
 
-       
-
+ 
         <!-- Download generated schedule -->
-        <input id="Button1" type="button" value="Download" />
+        <form method="post">
+            <input name="download" type="submit" value="Download" />
+        </form>
 
-        <!-- Save generated schedule -->
-        <input id="Button2" type="button" value="Save Changes" />
+		<input name="add" type="button" value="Schedule More Sessions" action="{{redirect(url_for('stepOne'))}}" />
 
     </main>
 
