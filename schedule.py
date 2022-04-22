@@ -229,7 +229,8 @@ class Schedule:
         formats = set()
 
         for sess in self.get_unscheduled_sessions():
-            formats.add(sess.format)
+            if sess.format != "":
+                formats.add(sess.format)
 
         return formats
 
@@ -239,7 +240,8 @@ class Schedule:
         formats = set()
 
         for room in self.all_rooms:
-            formats.add(room.format)
+            if room.format != "":
+                formats.add(room.format)
 
         return formats
 
@@ -249,7 +251,8 @@ class Schedule:
         equipment = set()
 
         for room in self.all_rooms:
-            equipment.update(room.equipment)
+            if room.equipment != [""]:
+                equipment.update(room.equipment)
         
         return equipment
 
@@ -259,7 +262,8 @@ class Schedule:
         properties = set()
 
         for room in self.all_rooms:
-            properties.add(room.property)
+            if room.property != "":
+                properties.add(room.property)
 
         return properties
 
@@ -269,7 +273,8 @@ class Schedule:
         topics = set()
 
         for sess in self.get_unscheduled_sessions():
-            topics.add(sess.topic)
+            if sess.topic != "":
+                topics.add(sess.topic)
 
         return topics
 
@@ -279,7 +284,8 @@ class Schedule:
         types = set()
 
         for sess in self.get_unscheduled_sessions():
-            types.add(sess.type)
+            if sess.type != "":
+                types.add(sess.type)
 
         return types
 
@@ -289,7 +295,8 @@ class Schedule:
         sponsors = set()
 
         for sess in self.get_unscheduled_sessions():
-            sponsors.update(sess.sponsors)
+            if sess.sponsors != [""]:
+                sponsors.update(sess.sponsors)
 
         return sponsors
 
@@ -358,7 +365,7 @@ class Schedule:
 
 
     # Get list of rooms that match filters and the number of available slots of specified days and times
-    def get_filtered_room_availability(self, days: list[datetime], times: list[datetime], equipment: list[str], capacity: int, formats: list[str], selected_sessions: list[Session]) -> list[tuple()]:
+    def get_filtered_room_availability(self, days: list[datetime], times: list[datetime], properties: list[str], equipment: list[str], capacity: int, formats: list[str], selected_sessions: list[Session]) -> list[tuple()]:
         compatible_rooms = []
 
         min_capacity = self.get_session_min_capacity(selected_sessions)
@@ -380,6 +387,8 @@ class Schedule:
                         continue
                     elif len(formats) > 0 and not room.format in formats:                       # Check if the room's format is in the list of filtered formats
                         continue
+                    elif len(properties) > 0 and not room.property in properties:               # Check if the room's property is in the list of filtered properties
+                        continue
 
                     if room.schedule[day_index][slot_index].session_id == -1:
                         num_available += 1
@@ -394,6 +403,9 @@ class Schedule:
     def create_day_schedule(self, sessions: list[Session], rooms: list[Room], day_index: int, day: datetime, slots: list[datetime]):
         self.days_scheduled += 1
         self.sessions_not_scheduled = []
+
+        # Sort sessions by capacity in descending order
+        sessions.sort(key=lambda x: x.est_capacity, reverse=True)
 
         # Loop through sessions
         for sess in sessions:
