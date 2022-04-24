@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field
 from datetime import datetime
+from operator import attrgetter
 import sys
 
 
@@ -19,7 +20,7 @@ class Speaker:
 class Session:
     session_id: int                      # Unique session identifier
     duration: int                        # Time in minutes that a session lasts
-    est_capcity: int                     # Estimated number of attendees
+    est_capacity: int                     # Estimated number of attendees
     title: str                           # Title of session
     format: str                          # Format of session (e.g., roundtable)
     topic: str                           # Topic of session (e.g., "African History")
@@ -65,17 +66,12 @@ class Room:
         empty_list = []
 
         for slot_index in range(num_slots):
-            empty_slot = Session(-1, 0, 0, 'Empty', 'Empty', 'Empty', 'Empty', [], [], [])
+            empty_slot = Session(-1, 0, 0, 'Emtpy', 'Empty', 'Empty', 'Empty', [], [], [])
             empty_slot.set_time(start_times[slot_index], end_times[slot_index], day)
             empty_list.append(empty_slot)
 
         self.schedule += [empty_list]
         self.slots = num_slots
-
-
-    # Set the format of the room
-    def set_format(self, format: str):
-        self.format = format
 
 
     # Add equipment to room
@@ -86,15 +82,11 @@ class Room:
     # Check if the session is compatible with this room
     def check_compatible(self, session: Session) -> bool:
         # Check if this room has the equipment needed by the session
-        if not set(session.equipment).issubset(self.equipment):
+        if session.equipment != [''] and self.equipment != [] and not set(session.equipment).issubset(self.equipment):
             return False
 
         # Check if the session's estimated capacity exceeds this room's maximum capacity
-        if session.est_capcity > self.max_capacity:
-            return False
-
-        # Check if the session's format matches the room's format
-        if session.format != self.format:
+        if session.est_capacity > self.max_capacity:
             return False
         
         return True
@@ -120,13 +112,16 @@ class Room:
                 continue
             elif session.topic in topic_log[day_index][i]:                        # Check if there is a topic conflict
                 continue
-            elif set(sponsor_log[day_index][i]).intersection(session.sponsors):   # Check if there is a sponsor conflict
+            elif session.sponsors != [''] and set(session.sponsors).intersection(sponsor_log[day_index][i]):   # Check if there is a sponsor conflict
                 continue
 
             # Insert the session if there is enough open space
             session.set_time(start_times[i], end_times[i], day)
             session.set_room(self.room_id)
             self.schedule[day_index][i] = session
+            
+            if self.equipment == [] and session.equipment != ['']:
+                self.add_equipment(session.equipment)
 
             # Update speaker and topic logs
             speaker_log[day_index][i] = speaker_log[day_index][i] + session.speaker
@@ -196,10 +191,7 @@ class Schedule:
         for room in self.rooms_sched.values():
             room.print_schedule(self.start_times, self.end_times, self.days)
         
-        if len(self.sessions_not_scheduled) > 0:
-            print('Could not schedule sessions:')
-            for sess in self.sessions_not_scheduled:
-                print(sess.session_id)
+        print(f'Successfully scheduled {len(self.sessions_scheduled)} out of {len(self.all_sessions)} sessions.')
 
     
     # Get speaker object given the speaker's ID
@@ -237,7 +229,8 @@ class Schedule:
         formats = set()
 
         for sess in self.get_unscheduled_sessions():
-            formats.add(sess.format)
+            if sess.format != "":
+                formats.add(sess.format)
 
         return formats
 
@@ -247,7 +240,8 @@ class Schedule:
         formats = set()
 
         for room in self.all_rooms:
-            formats.add(room.format)
+            if room.format != "":
+                formats.add(room.format)
 
         return formats
 
@@ -257,7 +251,8 @@ class Schedule:
         equipment = set()
 
         for room in self.all_rooms:
-            equipment.update(room.equipment)
+            if room.equipment != [""]:
+                equipment.update(room.equipment)
         
         return equipment
 
@@ -267,7 +262,8 @@ class Schedule:
         properties = set()
 
         for room in self.all_rooms:
-            properties.add(room.property)
+            if room.property != "":
+                properties.add(room.property)
 
         return properties
 
@@ -277,7 +273,8 @@ class Schedule:
         topics = set()
 
         for sess in self.get_unscheduled_sessions():
-            topics.add(sess.topic)
+            if sess.topic != "":
+                topics.add(sess.topic)
 
         return topics
 
@@ -287,7 +284,8 @@ class Schedule:
         types = set()
 
         for sess in self.get_unscheduled_sessions():
-            types.add(sess.type)
+            if sess.type != "":
+                types.add(sess.type)
 
         return types
 
@@ -297,12 +295,13 @@ class Schedule:
         sponsors = set()
 
         for sess in self.get_unscheduled_sessions():
-            sponsors.update(sess.sponsors)
+            if sess.sponsors != [""]:
+                sponsors.update(sess.sponsors)
 
         return sponsors
 
 
-    # Returns the max capcity of all rooms
+    # Returns the max capacity of all rooms
     def get_room_max_capacity(self) -> int:
         max = 0
 
@@ -313,13 +312,13 @@ class Schedule:
         return max
 
 
-    # Returns the smallest capcity of selected sessions
-    def get_session_min_capacity(self, selected_sessions: list[Session]) -> int:      
+    # Returns the smallest capacity of selected sessions
+    def get_session_min_capacity(self, selected_sessions: list[Session]) -> int:
         min = sys.maxsize
 
         for session in selected_sessions:
-            if session.est_capcity < min:
-                min = session.est_capcity
+            if session.est_capacity < min:
+                min = session.est_capacity
 
         return min
 
@@ -384,11 +383,11 @@ class Schedule:
                         continue
                     elif not capacity == None and room.max_capacity > capacity:                 # Check if room's capacity exceeds the filtered capacity
                         continue
-                    elif room.max_capacity < min_capacity:                                      # Check if room's capcity is less than the minimum capacity of selected sessions
+                    elif room.max_capacity < min_capacity:                                      # Check if room's capacity is less than the minimum capacity of selected sessions
                         continue
                     elif len(formats) > 0 and not room.format in formats:                       # Check if the room's format is in the list of filtered formats
                         continue
-                    elif len(properties) > 0 and not room.property in properties:
+                    elif len(properties) > 0 and not room.property in properties:               # Check if the room's property is in the list of filtered properties
                         continue
 
                     if room.schedule[day_index][slot_index].session_id == -1:
@@ -405,14 +404,15 @@ class Schedule:
         self.days_scheduled += 1
         self.sessions_not_scheduled = []
 
+        # Sort sessions by capacity in descending order
+        sessions.sort(key=lambda x: x.est_capacity, reverse=True)
+
         # Loop through sessions
         for sess in sessions:
             is_scheduled = False
 
             for room in rooms:
                 if room.room_id not in self.rooms_sched.keys():
-                    room.add_equipment(sess.equipment)
-                    room.set_format(sess.format)
                     self.rooms_sched[room.room_id] = room
 
                 if self.rooms_sched[room.room_id].add_session(sess, day_index, day, slots, self.start_times, self.end_times, self.speaker_log, self.topic_log, self.sponsor_log):

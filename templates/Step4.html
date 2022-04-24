@@ -45,13 +45,13 @@
 			</table>
         </details>
 
+        
+        <a href="{{url_for('stepOne')}}">Schedule More Sessions</a>
  
         <!-- Download generated schedule -->
         <form method="post">
             <input name="download" type="submit" value="Download" />
         </form>
-
-		<input name="add" type="button" value="Schedule More Sessions" action="{{redirect(url_for('stepOne'))}}" />
 
     </main>
 
